@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './entities/user.schema';
+import { SignatureAuthGuard } from 'src/auth/guards/signature-auth.guard';
 
 @Controller('users')
 export class UserController {
@@ -25,6 +26,7 @@ export class UserController {
     return this.userService.findById(id);
   }
 
+  @UseGuards(SignatureAuthGuard)
   @Get()
   async getAllUsers() {
     return this.userService.findAll();

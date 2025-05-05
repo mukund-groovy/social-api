@@ -7,16 +7,8 @@ export abstract class CommonService<T extends Document> extends BaseService<T> {
     super(dao);
   }
 
-  count(filter: FilterQuery<T> = {}): Promise<number> {
-    return this.dao.count(filter);
-  }
-
-  exists(filter: FilterQuery<T>): Promise<boolean> {
-    return this.dao.exists(filter);
-  }
-
   async getUser() {
-    return this.findAll();
+    return await super.findAll();
   }
 
   // add more shared helpers as needed

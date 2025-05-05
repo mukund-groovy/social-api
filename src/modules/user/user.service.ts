@@ -10,10 +10,8 @@ export class UserService extends CommonService<UserDocument> {
   }
 
   async findAll(): Promise<UserDocument[] | any> {
-    console.log('userservice');
-    return 'OK';
     // Your custom implementation here
-    const user = this.getUser();
+    const user = await this.getUser();
     return { ...user };
   }
 }

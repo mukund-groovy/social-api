@@ -12,7 +12,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "gen:keys": "mkdir -p src/auth/keys && openssl genrsa -out src/auth/keys/client-private.pem 2048 && openssl rsa -in src/auth/keys/client-private.pem -pubout -out src/auth/keys/client-public.pem"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
