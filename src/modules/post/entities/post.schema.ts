@@ -13,9 +13,6 @@ export class Post {
   @Prop({ type: Array, default: [] })
   photos: [];
 
-  @Prop({ type: Boolean })
-  is_deleted: boolean;
-
   @Prop({ type: Array })
   report_post: [];
 }
