@@ -1,4 +1,11 @@
-import { Model, Document, FilterQuery, PipelineStage } from 'mongoose';
+import {
+  Model,
+  Document,
+  FilterQuery,
+  PipelineStage,
+  QueryOptions,
+  UpdateQuery,
+} from 'mongoose';
 
 export abstract class BaseDAO<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
@@ -9,8 +16,13 @@ export abstract class BaseDAO<T extends Document> {
   }
 
   // Find one item by filter
-  async findOne(filter: FilterQuery<T>): Promise<T | null> {
-    return this.model.findOne(filter).exec();
+
+  async findOne(
+    filter: FilterQuery<T>,
+    projection?: Record<string, any>,
+    options?: QueryOptions,
+  ): Promise<T | null> {
+    return this.model.findOne(filter, projection, options).exec();
   }
 
   // Find by ID
@@ -24,19 +36,28 @@ export abstract class BaseDAO<T extends Document> {
     return document.save();
   }
 
-  // Update an item by filter
-  async update(
-    filter: FilterQuery<T>,
-    updateData: Partial<T>,
+  //Find by id and update document
+  async findByIdAndUpdate(
+    id: string,
+    update: UpdateQuery<T>,
+    projection: Record<string, any> = {},
+    options?: QueryOptions,
   ): Promise<T | null> {
     return this.model
-      .findOneAndUpdate(filter, updateData, { new: true })
+      .findByIdAndUpdate(id, update, {
+        new: true,
+        projection,
+        ...options,
+      })
       .exec();
   }
 
-  // Delete an item by filter
-  async delete(filter: FilterQuery<T>): Promise<T | null> {
-    return this.model.findOneAndDelete(filter).exec();
+  // Find record by id and delete
+  async findByIdAndDelete(
+    id: string,
+    select: Record<string, any> = {},
+  ): Promise<T | null> {
+    return this.model.findByIdAndDelete(id, select).exec();
   }
 
   // Count the number of documents that match the filter

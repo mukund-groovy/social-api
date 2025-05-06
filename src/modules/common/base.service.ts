@@ -1,5 +1,11 @@
 import { BaseDAO } from '../common/base.dao';
-import { FilterQuery, PipelineStage, Document } from 'mongoose';
+import {
+  FilterQuery,
+  PipelineStage,
+  Document,
+  UpdateQuery,
+  QueryOptions,
+} from 'mongoose';
 
 export abstract class BaseService<T extends Document> {
   constructor(protected readonly dao: BaseDAO<T>) {}
@@ -24,17 +30,26 @@ export abstract class BaseService<T extends Document> {
     return this.dao.create(data);
   }
 
-  // Update an item by filter
-  async update(
-    filter: FilterQuery<T>,
-    updateData: Partial<T>,
+  //Find by id and update document
+  async findByIdAndUpdate(
+    id: string,
+    update: UpdateQuery<T>,
+    projection: Record<string, any> = {},
+    options?: QueryOptions,
   ): Promise<T | null> {
-    return this.dao.update(filter, updateData);
+    return this.dao.findByIdAndUpdate(id, update, {
+      new: true,
+      projection,
+      ...options,
+    });
   }
 
-  // Delete an item by filter
-  async delete(filter: FilterQuery<T>): Promise<T | null> {
-    return this.dao.delete(filter);
+  // Find record by id and delete
+  async findByIdAndDelete(
+    id: string,
+    select: Record<string, any> = {},
+  ): Promise<T | null> {
+    return this.dao.findByIdAndDelete(id, select);
   }
 
   // Count the number of documents that match the filter
