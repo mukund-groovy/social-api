@@ -1,7 +1,7 @@
 {
   "name": "aauti-social-api",
   "version": "1.0.0",
-  "description": "A NestJS v11 project",
+  "description": "A social media backend built with NestJS, supporting posts, comments, and media uploads.",
   "scripts": {
     "start": "node dist/main",
     "start:dev": "nest start --watch",

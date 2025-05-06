@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './interceptor/response.interceptor';
-import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { getEnv } from '@config/env.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,9 +10,8 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.enableCors(); // This allows ALL origins
 
-  const configService = app.get(ConfigService); // 💉 inject ConfigService
-  const port = configService.get<number>('PORT') || 3000;
-  const swaggerEnable = configService.get<string>('ENABLE_SWAGGER');
+  const port = getEnv('PORT', 3000);
+  const swaggerEnable = getEnv<string>('ENABLE_SWAGGER');
 
   if (swaggerEnable === 'true') {
     const config = new DocumentBuilder()

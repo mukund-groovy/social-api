@@ -36,3 +36,6 @@ lerna-debug.log*
 
 /keys/*.pem
 !keys/README.md  # keep the folder if needed
+
+.env
+package-lock.json

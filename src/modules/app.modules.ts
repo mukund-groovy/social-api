@@ -1,0 +1,14 @@
+// src/modules/app.modules.ts
+import { Module } from '@nestjs/common';
+import { UserModule } from './user/user.module';
+import { PostModule } from './post/post.module';
+// Add more feature modules here
+
+@Module({
+  imports: [
+    UserModule,
+    PostModule,
+    // Include all the modules you want
+  ],
+})
+export class AppModules {}
