@@ -85,6 +85,11 @@ export abstract class BaseDAO<T extends Document> {
     return this.model.findOneAndDelete(filter).exec();
   }
 
+  // Update many documents same time
+  async updateMany(filter: FilterQuery<T>, update: UpdateQuery<T>) {
+    return this.model.updateMany(filter, update);
+  }
+
   // Soft delete by setting a 'deleted' flag
   async softDelete(filter: FilterQuery<T>): Promise<T | null> {
     return this.model

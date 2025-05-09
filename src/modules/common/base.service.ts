@@ -75,6 +75,11 @@ export abstract class BaseService<T extends Document> {
     return this.dao.findOneAndDelete(filter);
   }
 
+  // Update many documents same time
+  async updateMany(filter: FilterQuery<T>, update: UpdateQuery<T>) {
+    return this.dao.updateMany(filter, update);
+  }
+
   // Soft delete by setting a 'deleted' flag (instead of actually deleting the document)
   async softDelete(filter: FilterQuery<T>): Promise<T | null> {
     return this.dao.softDelete(filter);

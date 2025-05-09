@@ -9,4 +9,12 @@ export const messages = {
   POST_CREATE: 'Post created successfully',
   POST_UPDATE: 'Post updated successfully',
   POST_DELETE: 'Post deleted successfully',
+  COMMENT_ADDED: 'Comment added successfully!',
+  COMMENT_UPDATED: 'Comment updated successfully!',
+  COMMENT_DELETED: 'Comment deleted successfully!',
+  COMMENT_NOT_FOUND: 'Comment not found',
+  SOMETHING_WENT_WRONG: 'Something went wrong.',
+  UNKNOWN_ERROR: 'An unknown error occurred',
+  POST_LIKED: 'Post liked',
+  POST_DISLIKED: 'Post disliked',
 };
