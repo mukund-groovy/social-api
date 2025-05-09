@@ -11,5 +11,6 @@ import { PostDAO } from './post.dao';
   ],
   controllers: [PostController],
   providers: [PostService, PostDAO],
+  exports: [PostService],
 })
 export class PostModule {}

@@ -12,5 +12,5 @@ export class CreatePostDto {
 
   @IsString()
   @IsNotEmpty()
-  user_id: ObjectId;
+  userId: ObjectId;
 }

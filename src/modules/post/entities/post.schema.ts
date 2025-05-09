@@ -5,7 +5,7 @@ export type PostDocument = Post & Document;
 @Schema({ timestamps: true, collection: 'post' })
 export class Post {
   @Prop({ type: SchemaTypes.ObjectId, required: true })
-  user_id: ObjectId;
+  userId: ObjectId;
 
   @Prop({ type: String })
   description: string;
@@ -14,7 +14,7 @@ export class Post {
   photos: [];
 
   @Prop({ type: Array })
-  report_post: [];
+  reportPost: [];
 }
 export const PostSchema = SchemaFactory.createForClass(Post);
 PostSchema.index({ user_id: 1 });
