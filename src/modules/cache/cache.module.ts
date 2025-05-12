@@ -14,7 +14,7 @@ const redisProvider = {
   provide: 'REDIS_CLIENT',
   useFactory: async (configService: ConfigService) => {
     redisConfig = {
-      host: 'localhost', //process.env.REDIS_HOST,
+      host: configService.get('REDIS_HOST') || 'localhost', //process.env.REDIS_HOST,
       port: configService.get('REDIS_PORT') || 10,
       // username: process.env.REDIS_USERNAME,
       // password: process.env.REDIS_PASSWORD,

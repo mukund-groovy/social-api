@@ -6,6 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { setConfigService } from './config/env.util';
 import { DatabaseModule } from './modules/database/database.module';
 import { AppModules } from './modules/app.modules';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseInterceptor } from './interceptor/response.interceptor';
+import { ErrorHandlingInterceptor } from './interceptor/error-handling.interceptor';
 
 @Module({
   imports: [
@@ -15,7 +18,17 @@ import { AppModules } from './modules/app.modules';
     AppModules,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ErrorHandlingInterceptor,
+    },
+  ],
 })
 export class AppModule {
   constructor(configService: ConfigService) {

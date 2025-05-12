@@ -32,6 +32,11 @@ export class UserController {
     return this.userService.deleteUser(id);
   }
 
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    return this.userService.findById(id);
+  }
+
   @UseGuards(SignatureAuthGuard)
   @Get()
   async getAllUsers() {
