@@ -15,7 +15,11 @@ export class PostLikeDAO extends BaseDAO<PostLikeDocument> {
     super(postLikeModel);
   }
 
-  async getLikeUserList(param: any): Promise<PostLike[] | number> {
+  async getLikeUserList(
+    param: any,
+  ): Promise<
+    { type: 'count'; data: number } | { type: 'list'; data: PostLikeDocument[] }
+  > {
     const {
       match,
       start_from = 1,
@@ -85,10 +89,10 @@ export class PostLikeDAO extends BaseDAO<PostLikeDocument> {
         { $count: 'total' },
       ]);
 
-      return countResult.length > 0 ? countResult[0].total : 0;
+      return { type: 'count', data: countResult?.[0]?.total || 0 };
     }
 
     const result = await this.postLikeModel.aggregate(aggregationPipeline);
-    return result;
+    return { type: 'list', data: result };
   }
 }

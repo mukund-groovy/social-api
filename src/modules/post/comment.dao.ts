@@ -20,7 +20,12 @@ export class PostCommentDAO extends BaseDAO<PostCommentDocument> {
     super(postCommentModel);
   }
 
-  async getCommentList(param: any): Promise<PostComment[] | number> {
+  async getCommentList(
+    param: any,
+  ): Promise<
+    | { type: 'count'; data: number }
+    | { type: 'list'; data: PostCommentDocument[] }
+  > {
     const {
       match,
       start_from = 1,
@@ -186,9 +191,9 @@ export class PostCommentDAO extends BaseDAO<PostCommentDocument> {
         { $count: 'total' },
       ]);
 
-      return countResult.length > 0 ? countResult[0].total : 0;
+      return { type: 'count', data: countResult?.[0]?.total || 0 };
     }
     const result = await this.postCommentModel.aggregate(aggregationPipeline);
-    return result;
+    return { type: 'list', data: result };
   }
 }

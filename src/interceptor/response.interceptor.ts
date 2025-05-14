@@ -15,6 +15,16 @@ export class ResponseInterceptor implements NestInterceptor {
         const response: any = { success: true };
 
         if (data && typeof data === 'object') {
+          const isPaginatedResponse =
+            'data' in data && 'page' in data && 'total_count' in data;
+
+          if (isPaginatedResponse) {
+            return {
+              success: true,
+              ...data,
+            };
+          }
+
           if ('message' in data) {
             response.message = data.message;
           }

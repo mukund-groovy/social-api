@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostDocument } from './entities/post.schema';
@@ -15,6 +15,9 @@ import { LikeDto } from './dto/like.dto';
 import { PostLikeDAO } from './like.dao';
 import { Type } from './post.constant';
 import { UserLikeDto } from './dto/user-like.dto';
+import { PostCommentDocument } from './entities/post-comment.entity';
+import { PaginatedResponse } from 'src/interface/response.interface';
+import { PostLikeDocument } from './entities/post-like.entity';
 
 @Injectable()
 export class PostService {
@@ -30,24 +33,15 @@ export class PostService {
    * @param createPostDto
    * @returns
    */
-  public async createPost(createPostDto: CreatePostDto) {
-    try {
-      //Create Post
-      // const post = await this.postDAO.create(createPostDto);
-      const data = {
-        ...createPostDto,
-        type: 'create',
-      };
-      await this.cacheService.addPostJob(data);
-      //TODO: Add logic for upload post file in azure file container
-      return { message: messages.POST_CREATE, success: true };
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
-    }
+  public async createPost(
+    createPostDto: CreatePostDto,
+  ): Promise<{ message: string }> {
+    const data = {
+      ...createPostDto,
+      type: 'create',
+    };
+    await this.cacheService.addPostJob(data);
+    return { message: messages.POST_CREATE };
   }
 
   /**
@@ -56,29 +50,22 @@ export class PostService {
    * @param updatePostDto
    * @returns
    */
-  async updatePost(id: string, updatePostDto: UpdatePostDto) {
-    try {
-      const post = await this.postDAO.findOne({ _id: ObjectID(id) });
+  async updatePost(
+    id: string,
+    updatePostDto: UpdatePostDto,
+  ): Promise<{ message: string }> {
+    const post = await this.postDAO.findOne({ _id: ObjectID(id) });
 
-      if (post) {
-        const data = {
-          ...updatePostDto,
-          type: 'update',
-          postId: ObjectID(id),
-        };
-        await this.cacheService.addPostJob(data);
-        //TODO: Add logic for upload post file data in azure file container
-        return { message: messages.POST_UPDATE, success: true };
-      } else {
-        return { message: messages.POST_NOT_FOUND, success: false };
-      }
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+    if (!post) {
+      throw new NotFoundException(messages.POST_NOT_FOUND);
     }
+    const data = {
+      ...updatePostDto,
+      type: 'update',
+      postId: ObjectID(id),
+    };
+    await this.cacheService.addPostJob(data);
+    return { message: messages.POST_UPDATE };
   }
 
   /**
@@ -86,75 +73,37 @@ export class PostService {
    * @param id
    * @returns
    */
-  async deletePost(id: string) {
-    try {
-      const post = await this.postDAO.findOne(ObjectID(id));
-      if (post) {
-        const data = {
-          type: 'delete',
-          postId: ObjectID(id),
-        };
-        await this.cacheService.addPostJob(data);
-        return { message: messages.POST_DELETE, success: true };
-      } else {
-        return { message: messages.POST_NOT_FOUND, success: false };
-      }
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+  async deletePost(id: string): Promise<{ message: string }> {
+    const post = await this.postDAO.findOne(ObjectID(id));
+    if (!post) {
+      throw new NotFoundException(messages.POST_NOT_FOUND);
     }
+    const data = {
+      type: 'delete',
+      postId: ObjectID(id),
+    };
+    await this.cacheService.addPostJob(data);
+    return { message: messages.POST_DELETE };
   }
 
   /**
    * APi for get list of post
    * @returns
    */
-  async findAll(): Promise<PostDocument[] | any> {
-    // Your custom implementation here
-    const post = await this.postDAO.findAll();
-    return post;
+  async findAll(): Promise<PostDocument[]> {
+    return await this.postDAO.findAll();
   }
 
-  async create(data: object) {
-    try {
-      const result = await this.postDAO.create(data);
-      return { success: true, data: result };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
-    }
+  async create(createData: object) {
+    return await this.postDAO.create(createData);
   }
 
   async findByIdAndUpdate(id: string, update: object) {
-    try {
-      const data = await this.postDAO.findByIdAndUpdate(id, update);
-      return data;
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
-    }
+    return await this.postDAO.findByIdAndUpdate(id, update);
   }
 
   async findByIdAndDelete(id: string) {
-    try {
-      const result = await this.postDAO.findByIdAndDelete(id);
-      return { success: true, data: result };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
-    }
+    return await this.postDAO.findByIdAndDelete(id);
   }
 
   /**
@@ -162,47 +111,36 @@ export class PostService {
    * @param AddCommentDto
    * @returns
    */
-  public async addComment(addCommentDto: AddCommentDto) {
-    try {
-      // Check if the post with the provided post ID exists and is not blocked.
-      const findPost = await this.postDAO.findOne(
-        {
-          _id: ObjectID(addCommentDto.postId),
-          isDeleted: { $ne: true },
-        },
-        { _id: 1 },
-      );
+  public async addComment(
+    addCommentDto: AddCommentDto,
+  ): Promise<{ message: string; data: PostCommentDocument }> {
+    const findPost = await this.postDAO.findOne(
+      {
+        _id: ObjectID(addCommentDto.postId),
+        isDeleted: { $ne: true },
+      },
+      { _id: 1 },
+    );
 
-      if (!findPost) {
-        return {
-          success: false,
-          message: messages.POST_NOT_FOUND,
-        };
-      }
-
-      const createComment: any = {
-        parentId: addCommentDto.parentId || 0,
-        comment: addCommentDto.comment,
-        postId: addCommentDto.postId,
-        userId: addCommentDto.userId,
-      };
-      // Save the new comment to the database.
-      await this.commentDAO.create(createComment);
-
-      // Delete Redis cache for that post’s comments
-      // await this.cacheService.delete(`post:${addCommentDto.post_id}:comments`);
-
-      return {
-        success: true,
-        message: messages.COMMENT_ADDED,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+    if (!findPost) {
+      throw new NotFoundException(messages.POST_NOT_FOUND);
     }
+
+    const createComment: any = {
+      parentId: addCommentDto.parentId || 0,
+      comment: addCommentDto.comment,
+      postId: addCommentDto.postId,
+      userId: addCommentDto.userId,
+    };
+    const comment = await this.commentDAO.create(createComment);
+
+    // Delete Redis cache for that post’s comments
+    // await this.cacheService.delete(`post:${addCommentDto.post_id}:comments`);
+
+    return {
+      message: messages.COMMENT_ADDED,
+      data: comment,
+    };
   }
 
   /**
@@ -211,37 +149,28 @@ export class PostService {
    * @param comment
    * @returns
    */
-  public async updateComment(id: string, comment: string) {
-    try {
-      //find the comment in the database using the provided id and update
-      const findComment = await this.commentDAO.findOneAndUpdate(
-        { _id: ObjectID(id), isDeleted: { $ne: true } },
-        { comment },
-      );
+  public async updateComment(
+    id: string,
+    comment: string,
+  ): Promise<{ message: string; data: PostCommentDocument }> {
+    const findComment = await this.commentDAO.findOneAndUpdate(
+      { _id: ObjectID(id), isDeleted: { $ne: true } },
+      { comment },
+    );
 
-      if (!findComment) {
-        return {
-          success: false,
-          message: messages.COMMENT_NOT_FOUND,
-        };
-      }
-
-      // Invalidate Redis cache for that post’s comments
-      // await this.cacheService.delete(
-      //   `post:${convertToString(findComment.postId)}:comments`,
-      // );
-
-      return {
-        success: true,
-        message: messages.COMMENT_UPDATED,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+    if (!findComment) {
+      throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
+
+    // Invalidate Redis cache for that post’s comments
+    // await this.cacheService.delete(
+    //   `post:${convertToString(findComment.postId)}:comments`,
+    // );
+
+    return {
+      message: messages.COMMENT_UPDATED,
+      data: findComment,
+    };
   }
 
   /**
@@ -249,42 +178,29 @@ export class PostService {
    * @param id
    * @returns
    */
-  public async deleteComment(id: string) {
-    try {
-      //find the comment in the database using the provided id and add is_delete key
-      const findComment = await this.commentDAO.updateMany(
-        {
-          $or: [{ _id: ObjectID(id) }, { parentId: id }],
+  public async deleteComment(id: string): Promise<{ message: string }> {
+    const findComment = await this.commentDAO.updateMany(
+      {
+        $or: [{ _id: ObjectID(id) }, { parentId: id }],
+      },
+      {
+        $set: {
+          isDeleted: true,
         },
-        {
-          $set: {
-            isDeleted: true,
-          },
-        },
-      );
-      if (!findComment) {
-        return {
-          success: false,
-          message: messages.POST_NOT_FOUND,
-        };
-      }
-
-      // Invalidate Redis cache for that post’s comments
-      // await this.cacheService.delete(
-      //   `post:${convertToString(findComment.postId)}:comments`,
-      // );
-
-      return {
-        success: true,
-        message: messages.COMMENT_DELETED,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+      },
+    );
+    if (!findComment) {
+      throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
+
+    // Invalidate Redis cache for that post’s comments
+    // await this.cacheService.delete(
+    //   `post:${convertToString(findComment.postId)}:comments`,
+    // );
+
+    return {
+      message: messages.COMMENT_DELETED,
+    };
   }
 
   /**
@@ -293,63 +209,63 @@ export class PostService {
    * @param CommentListDto
    * @returns
    */
-  public async commentList(id: string, commentListDto: CommentListDto) {
-    try {
-      // Define a match query to filter data
-      const query: any = {
-        parentId: '0',
-        isDeleted: { $ne: true },
-        postId: ObjectID(id),
-      };
+  public async commentList(
+    id: string,
+    commentListDto: CommentListDto,
+  ): Promise<PaginatedResponse<PostCommentDocument>> {
+    const query: any = {
+      parentId: '0',
+      isDeleted: { $ne: true },
+      postId: ObjectID(id),
+    };
 
-      if (isDefined(commentListDto.parentId)) {
-        query['parentId'] = commentListDto.parentId;
-      }
-
-      // Calculate the total count of items
-      const criteria: any = {};
-      criteria.match = query;
-      criteria.count = true;
-      const total_record = await this.commentDAO.getCommentList(criteria);
-
-      // Perform pagination and sorting
-      const {
-        per_page,
-        page,
-        total_pages,
-        prev_enable,
-        next_enable,
-        start_from,
-        sort,
-      } = sortFilterPagination(
-        commentListDto.page,
-        commentListDto.perPage,
-        total_record,
-      );
-
-      // Retrieve and process the data
-      criteria.start_from = start_from;
-      criteria.per_page = per_page;
-      criteria.sort = sort;
-      delete criteria.count;
-      const data = await this.commentDAO.getCommentList(criteria);
-      return {
-        data,
-        success: true,
-        total_count: total_record,
-        prev_enable: prev_enable,
-        next_enable: next_enable,
-        total_pages: total_pages,
-        per_page: per_page,
-        page: page,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+    if (isDefined(commentListDto.parentId)) {
+      query['parentId'] = commentListDto.parentId;
     }
+
+    const criteria: any = {};
+    criteria.match = query;
+    criteria.count = true;
+
+    const countResponse = await this.commentDAO.getCommentList(criteria);
+    if (countResponse.type !== 'count') {
+      throw new Error('Expected count result, but got list');
+    }
+    const total_record = countResponse.data;
+
+    const {
+      per_page,
+      page,
+      total_pages,
+      prev_enable,
+      next_enable,
+      start_from,
+      sort,
+    } = sortFilterPagination(
+      commentListDto.page,
+      commentListDto.perPage,
+      total_record,
+    );
+
+    criteria.start_from = start_from;
+    criteria.per_page = per_page;
+    criteria.sort = sort;
+    delete criteria.count;
+
+    const dataResponse = await this.commentDAO.getCommentList(criteria);
+    if (dataResponse.type !== 'list') {
+      throw new Error('Expected list result, but got count');
+    }
+
+    return {
+      data: dataResponse.data,
+      total_count: total_record,
+      prev_enable: prev_enable,
+      next_enable: next_enable,
+      total_pages: total_pages,
+      per_page: per_page,
+      page: page,
+    };
   }
 
   /**
@@ -357,55 +273,38 @@ export class PostService {
    * @param LikeDto
    * @returns
    */
-  public async likeDislike(likeDto: LikeDto) {
-    try {
-      //Check post exist or not
-      const postData = await this.postDAO.findOne({
-        _id: ObjectID(likeDto.postId),
-        isDeleted: { $ne: true },
-      });
+  public async likeDislike(likeDto: LikeDto): Promise<{ message: string }> {
+    const postData = await this.postDAO.findOne({
+      _id: ObjectID(likeDto.postId),
+      isDeleted: { $ne: true },
+    });
 
-      if (!postData) {
-        return {
-          message: messages.POST_NOT_FOUND,
-          success: false,
-        };
-      }
-
-      const findLikeData = await this.likeDAO.findOne({
-        postId: ObjectID(likeDto.postId),
-        userId: ObjectID(likeDto.userId),
-      });
-
-      const dtl: any = {
-        postId: likeDto.postId,
-        userId: likeDto.userId,
-      };
-
-      if (likeDto.type === Type.LIKE && !findLikeData) {
-        //Add record for comment like
-        await this.likeDAO.create(dtl);
-      } else if (likeDto.type === Type.DISLIKE && findLikeData) {
-        //delete liked record from db
-        await this.likeDAO.findOneAndDelete(dtl);
-      }
-
-      const msg =
-        likeDto.type === Type.LIKE
-          ? messages.POST_LIKED
-          : messages.POST_DISLIKED;
-
-      return {
-        message: msg,
-        success: true,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+    if (!postData) {
+      throw new NotFoundException(messages.POST_NOT_FOUND);
     }
+
+    const findLikeData = await this.likeDAO.findOne({
+      postId: ObjectID(likeDto.postId),
+      userId: ObjectID(likeDto.userId),
+    });
+
+    const dtl: any = {
+      postId: likeDto.postId,
+      userId: likeDto.userId,
+    };
+
+    if (likeDto.type === Type.LIKE && !findLikeData) {
+      await this.likeDAO.create(dtl);
+    } else if (likeDto.type === Type.DISLIKE && findLikeData) {
+      await this.likeDAO.findOneAndDelete(dtl);
+    }
+
+    const msg =
+      likeDto.type === Type.LIKE ? messages.POST_LIKED : messages.POST_DISLIKED;
+
+    return {
+      message: msg,
+    };
   }
 
   /**
@@ -414,53 +313,56 @@ export class PostService {
    * @param param
    * @returns
    */
-  public async likeUserList(id: string, userLikeDto: UserLikeDto) {
-    try {
-      const criteria: any = {};
-      criteria.match = {
-        postId: ObjectID(id),
-      };
-      criteria.count = true;
-      const total_record = await this.likeDAO.getLikeUserList(criteria);
+  public async likeUserList(
+    id: string,
+    userLikeDto: UserLikeDto,
+  ): Promise<PaginatedResponse<PostLikeDocument>> {
+    const criteria: any = {};
+    criteria.match = {
+      postId: ObjectID(id),
+    };
+    criteria.count = true;
 
-      // Perform pagination and sorting
-      const {
-        per_page,
-        page,
-        total_pages,
-        prev_enable,
-        next_enable,
-        start_from,
-        sort,
-      } = sortFilterPagination(
-        userLikeDto.page,
-        userLikeDto.perPage,
-        total_record,
-        null,
-        'createdAt',
-        1,
-      );
-      criteria.start_from = start_from;
-      criteria.per_page = per_page;
-      criteria.sort = sort;
-      delete criteria.count;
-      const data = await this.likeDAO.getLikeUserList(criteria);
-      return {
-        data: data,
-        success: true,
-        total_count: total_record,
-        prev_enable: prev_enable,
-        next_enable: next_enable,
-        total_pages: total_pages,
-        per_page: per_page,
-        page: page,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : String(error) || messages.UNKNOWN_ERROR;
-      return { success: false, message };
+    const countResponse = await this.likeDAO.getLikeUserList(criteria);
+    if (countResponse.type !== 'count') {
+      throw new Error('Expected count result, but got list');
     }
+    const total_record = countResponse.data;
+
+    const {
+      per_page,
+      page,
+      total_pages,
+      prev_enable,
+      next_enable,
+      start_from,
+      sort,
+    } = sortFilterPagination(
+      userLikeDto.page,
+      userLikeDto.perPage,
+      total_record,
+      null,
+      'createdAt',
+      1,
+    );
+    criteria.start_from = start_from;
+    criteria.per_page = per_page;
+    criteria.sort = sort;
+    delete criteria.count;
+
+    const dataResponse = await this.likeDAO.getLikeUserList(criteria);
+    if (dataResponse.type !== 'list') {
+      throw new Error('Expected list result, but got count');
+    }
+
+    return {
+      data: dataResponse.data,
+      total_count: total_record,
+      prev_enable: prev_enable,
+      next_enable: next_enable,
+      total_pages: total_pages,
+      per_page: per_page,
+      page: page,
+    };
   }
 }
