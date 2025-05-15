@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-import { QUEUE_CONSTANTS } from './cache.constants';
-import { getEnv } from '@config/env.util';
+import { getEnv } from '@utils/env.util';
 
 @Injectable()
 export class CacheService {
@@ -11,12 +8,7 @@ export class CacheService {
   private redisAvailable = true;
   private readonly prefix: string; // Prefix for all cache keys
 
-  constructor(
-    @Inject('REDIS_CLIENT') private readonly redis: Redis,
-    @InjectQueue(QUEUE_CONSTANTS.POST_QUEUE)
-    // @InjectQueue(`${getEnv<string>('REDIS_PREFIX') || 'DEV'}-post-queue`)
-    private readonly postQueue: Queue,
-  ) {
+  constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {
     // Initialize the prefix based on the environment
     this.prefix = getEnv('REDIS_PREFIX', 'DEV');
     // Check if Redis is available on service initialization
@@ -207,9 +199,5 @@ export class CacheService {
     } catch (error) {
       console.error('Error updating key in group index in Redis:', error);
     }
-  }
-
-  async addPostJob(data: any) {
-    await this.postQueue.add('post', data); // Adds a job to the queue
   }
 }

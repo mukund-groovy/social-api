@@ -16,7 +16,7 @@
     "gen:keys": "mkdir -p keys && openssl genrsa -out keys/client-private.pem 2048 && openssl rsa -in keys/client-private.pem -pubout -out keys/client-public.pem"
   },
   "dependencies": {
-    "@nestjs/bull": "^11.0.2",
+    "@nestjs/bullmq": "^11.0.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.0",
@@ -24,12 +24,12 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.2.0",
-    "bull": "^4.16.5",
+    "bullmq": "^5.52.2",
     "class-validator": "^0.14.2",
     "ioredis": "^5.6.1",
-    "mongoose": "^8.14.1",
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.48",
+    "mongoose": "^8.14.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1"

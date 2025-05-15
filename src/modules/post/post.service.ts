@@ -2,22 +2,22 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostDocument } from './entities/post.schema';
-import { CacheService } from '../cache/cache.service';
 import { PostDAO } from './post.dao';
 import { messages } from 'src/message.config';
 import { AddCommentDto } from './dto/add-comment.dto';
-import { ObjectID } from 'src/utils/mongodb.util';
+import { ObjectID } from '@utils/mongodb.util';
 import { PostCommentDAO } from './comment.dao';
-import { sortFilterPagination } from 'src/utils/function.util';
-import { isDefined } from 'src/utils/lodash.util';
+import { sortFilterPagination } from '@utils/function.util';
+import { isDefined } from '@utils/lodash.util';
 import { CommentListDto } from './dto/comment-list.dto';
 import { LikeDto } from './dto/like.dto';
 import { PostLikeDAO } from './like.dao';
 import { Type } from './post.constant';
 import { UserLikeDto } from './dto/user-like.dto';
 import { PostCommentDocument } from './entities/post-comment.entity';
-import { PaginatedResponse } from 'src/interface/response.interface';
+import { PaginatedResponse } from 'src/common/interface/response.interface';
 import { PostLikeDocument } from './entities/post-like.entity';
+import { PostQueue } from './post.queue';
 
 @Injectable()
 export class PostService {
@@ -25,7 +25,7 @@ export class PostService {
     private readonly postDAO: PostDAO,
     private readonly commentDAO: PostCommentDAO,
     private readonly likeDAO: PostLikeDAO,
-    private readonly cacheService: CacheService,
+    private readonly postQueue: PostQueue,
   ) {}
 
   /**
@@ -40,7 +40,7 @@ export class PostService {
       ...createPostDto,
       type: 'create',
     };
-    await this.cacheService.addPostJob(data);
+    await this.postQueue.addPostJob(data);
     return { message: messages.POST_CREATE };
   }
 
@@ -64,7 +64,7 @@ export class PostService {
       type: 'update',
       postId: ObjectID(id),
     };
-    await this.cacheService.addPostJob(data);
+    await this.postQueue.addPostJob(data);
     return { message: messages.POST_UPDATE };
   }
 
@@ -82,7 +82,7 @@ export class PostService {
       type: 'delete',
       postId: ObjectID(id),
     };
-    await this.cacheService.addPostJob(data);
+    await this.postQueue.addPostJob(data);
     return { message: messages.POST_DELETE };
   }
 

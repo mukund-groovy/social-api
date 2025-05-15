@@ -3,12 +3,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { setConfigService } from './config/env.util';
+import { setConfigService } from '@utils/env.util';
 import { DatabaseModule } from './modules/database/database.module';
 import { AppModules } from './modules/app.modules';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ResponseInterceptor } from './interceptor/response.interceptor';
-import { ErrorHandlingInterceptor } from './interceptor/error-handling.interceptor';
+import { ResponseInterceptor } from './common/interceptor/response.interceptor';
+import { ErrorHandlingInterceptor } from './common/interceptor/error-handling.interceptor';
 
 @Module({
   imports: [

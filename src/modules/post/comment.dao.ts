@@ -6,7 +6,7 @@ import {
   PostComment,
   PostCommentDocument,
 } from './entities/post-comment.entity';
-import { getEnv } from '@config/env.util';
+import { getEnv } from '@utils/env.util';
 
 const SORT = { _id: -1 };
 const perPage = 20;

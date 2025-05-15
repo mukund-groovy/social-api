@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { BaseDAO } from '../common/base.dao';
 import { PostLike, PostLikeDocument } from './entities/post-like.entity';
-import { getEnv } from '@config/env.util';
+import { getEnv } from '@utils/env.util';
 
 const SORT = { _id: -1 };
 const perPage = 20;
