@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Inject,
 } from '@nestjs/common';
 import { UserDAO } from './user.dao';
 import { UserDocument } from './entities/user.schema';
@@ -9,17 +10,24 @@ import { CommonService } from './../common/common.service';
 import { messages } from '../../message.config';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ObjectID } from '@utils/mongodb.util';
+import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class UserService extends CommonService<UserDocument> {
-  constructor(private readonly userDAO: UserDAO) {
+  constructor(
+    @Inject(REQUEST) private readonly request: any,
+    private readonly userDAO: UserDAO,
+  ) {
     super(userDAO);
   }
 
   async saveUser(
     createUser: CreateUserDto,
   ): Promise<{ message: string; data: UserDocument }> {
-    const existingUser = await this.userDAO.findById(createUser._id);
+    const existingUser = await this.userDAO.findOne({
+      saayamId: createUser.saayamId,
+    });
     if (existingUser) {
       throw new ConflictException(messages.USER_ALREADY_EXIST);
     }
@@ -35,7 +43,10 @@ export class UserService extends CommonService<UserDocument> {
     id: string,
     updateUser: UpdateUserDto,
   ): Promise<{ message: string; data: UserDocument }> {
-    const user = await this.userDAO.findByIdAndUpdate(id, updateUser);
+    const user = await this.userDAO.findOneAndUpdate(
+      { saayamId: ObjectID(id) },
+      updateUser,
+    );
     if (!user) {
       throw new NotFoundException(messages.USER_NOT_FOUND);
     }
@@ -46,7 +57,9 @@ export class UserService extends CommonService<UserDocument> {
   }
 
   async deleteUser(id: string): Promise<{ message: string }> {
-    const user = await this.userDAO.findByIdAndDelete(id);
+    const user = await this.userDAO.findOneAndDelete({
+      saayamId: ObjectID(id),
+    });
     if (!user) {
       throw new NotFoundException(messages.USER_NOT_FOUND);
     }

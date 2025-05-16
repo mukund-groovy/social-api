@@ -1,11 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { USER_TYPE } from '../user.constant';
+import { ObjectId } from 'mongoose';
 
 export class CreateUserDto {
   @ApiProperty()
   @IsNotEmpty()
-  @IsString()
-  _id: string;
+  @IsMongoId()
+  saayamId: ObjectId;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -18,13 +27,14 @@ export class CreateUserDto {
   lastName: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   displayName: string;
 
   @ApiProperty()
   @IsEmail()
   @IsString()
+  @IsOptional()
   email: string;
 
   @ApiProperty()
@@ -40,5 +50,6 @@ export class CreateUserDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
+  @IsEnum(USER_TYPE)
   type: string;
 }
