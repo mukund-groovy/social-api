@@ -26,7 +26,7 @@ export class UserService extends CommonService<UserDocument> {
     createUser: CreateUserDto,
   ): Promise<{ message: string; data: UserDocument }> {
     const existingUser = await this.userDAO.findOne({
-      saayamId: createUser.saayamId,
+      userId: createUser.userId,
     });
     if (existingUser) {
       throw new ConflictException(messages.USER_ALREADY_EXIST);
@@ -44,7 +44,7 @@ export class UserService extends CommonService<UserDocument> {
     updateUser: UpdateUserDto,
   ): Promise<{ message: string; data: UserDocument }> {
     const user = await this.userDAO.findOneAndUpdate(
-      { saayamId: ObjectID(id) },
+      { userId: ObjectID(id) },
       updateUser,
     );
     if (!user) {
@@ -58,7 +58,7 @@ export class UserService extends CommonService<UserDocument> {
 
   async deleteUser(id: string): Promise<{ message: string }> {
     const user = await this.userDAO.findOneAndDelete({
-      saayamId: ObjectID(id),
+      userId: ObjectID(id),
     });
     if (!user) {
       throw new NotFoundException(messages.USER_NOT_FOUND);
@@ -74,6 +74,10 @@ export class UserService extends CommonService<UserDocument> {
       throw new NotFoundException(messages.USER_NOT_FOUND);
     }
     return user;
+  }
+
+  async findOne(filter: object): Promise<UserDocument> {
+    return await this.userDAO.findOne(filter);
   }
 
   async findAll(): Promise<UserDocument[]> {

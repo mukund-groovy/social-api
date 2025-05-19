@@ -14,7 +14,7 @@ export class CreateUserDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsMongoId()
-  saayamId: ObjectId;
+  userId: ObjectId;
 
   @ApiProperty()
   @IsNotEmpty()

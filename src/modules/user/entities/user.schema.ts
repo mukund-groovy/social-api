@@ -6,7 +6,7 @@ export type UserDocument = User & Document;
 @Schema({ timestamps: true })
 export class User {
   @Prop({ type: SchemaTypes.ObjectId, required: true })
-  saayamId: ObjectId;
+  userId: ObjectId;
 
   @Prop({ type: String, required: true })
   firstName: string;
@@ -34,4 +34,4 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-UserSchema.index({ saayamId: 'text' });
+UserSchema.index({ userId: 'text' });

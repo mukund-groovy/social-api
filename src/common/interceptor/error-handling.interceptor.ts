@@ -8,6 +8,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { isArray } from '@utils/lodash.util';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -56,9 +57,13 @@ export class ErrorHandlingInterceptor implements NestInterceptor {
   // Ensures message is a string in case of structured error responses
   private formatErrorMessage(response: any): string {
     if (typeof response === 'object' && response?.message) {
-      return typeof response.message === 'string'
-        ? response.message
-        : 'An unexpected error occurred';
+      if (typeof response.message === 'string') {
+        return response.message;
+      } else if (isArray(response.message)) {
+        return response.message[0];
+      } else {
+        return 'An unexpected error occurred';
+      }
     }
     return 'An unexpected error occurred';
   }

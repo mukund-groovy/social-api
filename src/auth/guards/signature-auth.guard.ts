@@ -10,6 +10,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Request } from 'express';
 import { UserService } from 'src/modules/user/user.service';
+import { ObjectID } from '@utils/mongodb.util';
 
 @Injectable()
 export class SignatureAuthGuard implements CanActivate {
@@ -52,7 +53,7 @@ export class SignatureAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid signature');
     }
 
-    const user = await this.userService.findById(userId);
+    const user = await this.userService.findOne({ userId: ObjectID(userId) });
     if (!user) {
       throw new BadRequestException('User not found');
     }

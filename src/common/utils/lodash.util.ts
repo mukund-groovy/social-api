@@ -27,3 +27,7 @@ export function isValidAndDefined(value: any): boolean {
 export function convertToString(value: any): string {
   return _.toString(value);
 }
+
+export function isArray(value: any): boolean {
+  return _.isArray(value);
+}
