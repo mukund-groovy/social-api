@@ -2,10 +2,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, ObjectId, SchemaTypes } from 'mongoose';
 
-export type PostCommentDocument = PostComment & Document;
+export type CommentDocument = Comment & Document;
 
-@Schema({ timestamps: true, collection: 'post_comments' })
-export class PostComment {
+@Schema({ timestamps: true, collection: 'comments' })
+export class Comment {
   @Prop({ type: String, default: 0 })
   parentId: string;
 
@@ -25,4 +25,4 @@ export class PostComment {
   postId: ObjectId;
 }
 
-export const PostCommentSchema = SchemaFactory.createForClass(PostComment);
+export const CommentSchema = SchemaFactory.createForClass(Comment);

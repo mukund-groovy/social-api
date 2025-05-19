@@ -6,13 +6,10 @@ import {
   Put,
   Param,
   Delete,
-  Query,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { AddCommentDto } from './dto/add-comment.dto';
-import { CommentListDto } from './dto/comment-list.dto';
 
 @Controller('post')
 export class PostController {
@@ -59,53 +56,5 @@ export class PostController {
   @Get()
   async getAllPosts() {
     return this.postService.findAll();
-  }
-
-  /**
-   * API for create comment in post
-   * @param commentDto
-   * @returns
-   */
-  @Post('add-comment')
-  async addComment(@Body() addCommentDto: AddCommentDto) {
-    return await this.postService.addComment(addCommentDto);
-  }
-
-  /**
-   * API for update comment in post
-   * @param id
-   * @param comment
-   * @returns
-   */
-  @Put('update-comment/:id')
-  async updateComment(
-    @Param('id') id: string,
-    @Body('comment') comment: string,
-  ) {
-    return await this.postService.updateComment(id, comment);
-  }
-
-  /**
-   * API for delete comment in post
-   * @param id
-   * @returns
-   */
-  @Delete('delete-comment/:id')
-  async deleteComment(@Param('id') id: string) {
-    return await this.postService.deleteComment(id);
-  }
-
-  /**
-   * API for list comments of post
-   * @param id
-   * @param CommentListDto
-   * @returns
-   */
-  @Get('comment-list/:id')
-  async commentList(
-    @Param('id') id: string,
-    @Query() commentListDto: CommentListDto,
-  ) {
-    return await this.postService.commentList(id, commentListDto);
   }
 }

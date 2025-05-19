@@ -9,6 +9,8 @@ import { PostModule } from '../post/post.module';
 import { LikeModule } from '../like/like.module';
 import { LikeProcessor } from './processors/like.processor';
 import { getPrefixedQueueName } from '@utils/env.util';
+import { CommentModule } from '../comment/comment.module';
+import { CommentProcessor } from './processors/comment.processor';
 
 @Module({
   imports: [
@@ -45,11 +47,27 @@ import { getPrefixedQueueName } from '@utils/env.util';
         };
       },
     }),
+    BullModule.registerQueueAsync({
+      name: QUEUE_CONSTANTS.COMMENT_QUEUE,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async () => {
+        const queueName = getPrefixedQueueName(QUEUE_CONSTANTS.COMMENT_QUEUE);
+        return {
+          name: queueName,
+          defaultJobOptions: {
+            removeOnComplete: false,
+            removeOnFail: false,
+          },
+        };
+      },
+    }),
     forwardRef(() => PostModule),
     LikeModule,
+    CommentModule,
   ],
 
-  providers: [PostProcessor, LikeProcessor],
+  providers: [PostProcessor, LikeProcessor, CommentProcessor],
   exports: [BullModule], // export BullModule so queues can be injected in other modules
 })
 export class QueueModule {}
