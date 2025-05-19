@@ -9,6 +9,8 @@ import { AppModules } from './modules/app.modules';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptor/response.interceptor';
 import { ErrorHandlingInterceptor } from './common/interceptor/error-handling.interceptor';
+import { ContextInterceptor } from './common/context/context.interceptor';
+import { ContextModule } from './common/context/context.module';
 
 @Module({
   imports: [
@@ -16,6 +18,7 @@ import { ErrorHandlingInterceptor } from './common/interceptor/error-handling.in
     DatabaseModule,
     AuthModule,
     AppModules,
+    ContextModule,
   ],
   controllers: [AppController],
   providers: [
@@ -27,6 +30,10 @@ import { ErrorHandlingInterceptor } from './common/interceptor/error-handling.in
     {
       provide: APP_INTERCEPTOR,
       useClass: ErrorHandlingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ContextInterceptor,
     },
   ],
 })

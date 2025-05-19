@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { LikeService } from './like.service';
 import { LikeUnlikeDto } from './dto/like-unlike.dto';
 import { UserLikeDto } from './dto/user-like.dto';
+import { SignatureAuthGuard } from 'src/auth/guards/signature-auth.guard';
 
 @Controller('like')
 export class LikeController {
@@ -12,6 +21,7 @@ export class LikeController {
    * @param likeDto
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Post('like-post')
   likePost(@Body() likeDto: LikeUnlikeDto) {
     return this.likeService.likePost(likeDto);
@@ -22,6 +32,7 @@ export class LikeController {
    * @param unlikeDto
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Post('unlike-post')
   unlikePost(@Body() unlikeDto: LikeUnlikeDto) {
     return this.likeService.unlikePost(unlikeDto);
@@ -33,6 +44,7 @@ export class LikeController {
    * @param query
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Get('user-list/:postId')
   likeUserList(
     @Param('postId') postId: string,

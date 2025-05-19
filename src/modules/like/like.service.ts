@@ -5,13 +5,20 @@ import { LikeQueue } from './like.queue';
 import { LikeDAO } from './like.dao';
 import { ObjectID } from '@utils/mongodb.util';
 import { UserLikeDto } from './dto/user-like.dto';
+import { CommonService } from '../common/common.service';
+import { LikeDocument } from './entities/like.entity';
+import { CacheService } from '../cache/cache.service';
+import { convertToString } from '@utils/lodash.util';
 
 @Injectable()
-export class LikeService {
+export class LikeService extends CommonService<LikeDocument> {
   constructor(
     private readonly likeQueue: LikeQueue,
     private readonly likeDAO: LikeDAO,
-  ) {}
+    private readonly cacheService: CacheService,
+  ) {
+    super(likeDAO);
+  }
 
   /**
    * API for like post
@@ -19,7 +26,15 @@ export class LikeService {
    * @returns
    */
   async likePost(likeDto: LikeUnlikeDto): Promise<{ message: string }> {
-    await this.likeQueue.enqueueLike(likeDto);
+    const user = await this.getCurrentUser();
+    const userId = convertToString(user.userId);
+
+    await this.cacheService.incr(`post:${likeDto.postId}:likes`);
+    await this.cacheService.sadd(`post:${likeDto.postId}:likers`, userId);
+
+    const insertData = { userId, postId: likeDto.postId };
+
+    await this.likeQueue.enqueueLike(insertData);
     return {
       message: messages.POST_LIKED,
     };
@@ -31,7 +46,14 @@ export class LikeService {
    * @returns
    */
   async unlikePost(unlikeDto: LikeUnlikeDto): Promise<{ message: string }> {
-    await this.likeQueue.enqueueUnlike(unlikeDto);
+    const user = await this.getCurrentUser();
+    const userId = convertToString(user.userId);
+
+    await this.cacheService.decr(`post:${unlikeDto.postId}:likes`);
+    await this.cacheService.srem(`post:${unlikeDto.postId}:likers`, userId);
+
+    const insertData = { userId, postId: unlikeDto.postId };
+    await this.likeQueue.enqueueUnlike(insertData);
     return {
       message: messages.POST_UNLIKED,
     };
@@ -60,21 +82,5 @@ export class LikeService {
       users: result,
       last_id: result.length ? result[result.length - 1]._id : null,
     };
-  }
-
-  async findOne(userId: string, postId: string) {
-    return await this.likeDAO.findOne({ userId, postId });
-  }
-
-  async updateOne(userId: string, postId: string) {
-    return await this.likeDAO.updateOne(
-      { userId, postId },
-      { $setOnInsert: { userId, postId } },
-      { upsert: true },
-    );
-  }
-
-  async findOneAndDelete(userId: string, postId: string) {
-    return await this.likeDAO.findOneAndDelete({ userId, postId });
   }
 }

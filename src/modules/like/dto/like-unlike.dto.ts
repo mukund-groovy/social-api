@@ -6,9 +6,4 @@ export class LikeUnlikeDto {
   @IsString()
   @IsNotEmpty()
   postId: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
 }

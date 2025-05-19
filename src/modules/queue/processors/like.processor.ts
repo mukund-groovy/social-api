@@ -1,15 +1,10 @@
 // like.processor.ts
-import {
-  Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { getPrefixedQueueName } from '@utils/env.util';
 import { Worker, Job } from 'bullmq';
 import { QUEUE_CONSTANTS } from '../queue.constants';
 import { LikeService } from 'src/modules/like/like.service';
-import Redis from 'ioredis';
+import { CacheService } from 'src/modules/cache/cache.service';
 
 @Injectable()
 export class LikeProcessor implements OnModuleInit, OnModuleDestroy {
@@ -17,10 +12,10 @@ export class LikeProcessor implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly likeService: LikeService,
-    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
+    private readonly cacheService: CacheService,
   ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     const queueName = getPrefixedQueueName(QUEUE_CONSTANTS.LIKE_QUEUE);
 
     this.worker = new Worker(
@@ -29,18 +24,29 @@ export class LikeProcessor implements OnModuleInit, OnModuleDestroy {
         const { userId, postId } = job.data;
 
         if (job.name === 'like') {
-          const hasLiked = await this.likeService.findOne(userId, postId);
-          if (!hasLiked) {
-            await this.likeService.updateOne(userId, postId);
-          }
+          const hasLiked = await this.cacheService.sismember(
+            `post:${postId}:likers`,
+            userId,
+          );
+          if (!hasLiked) return;
+          await this.likeService.updateOne(
+            { userId, postId },
+            { $setOnInsert: { userId, postId } },
+            { upsert: true },
+          );
         } else if (job.name === 'unlike') {
-          await this.likeService.findOneAndDelete(userId, postId);
+          const stillLiked = await this.cacheService.sismember(
+            `post:${postId}:likers`,
+            userId,
+          );
+          if (stillLiked) return;
+          await this.likeService.findOneAndDelete({ userId, postId });
         } else {
           throw new Error(`Unknown job type: ${job.name}`);
         }
       },
       {
-        connection: this.redisClient,
+        connection: await this.cacheService.getRedis(),
       },
     );
 

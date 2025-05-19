@@ -6,11 +6,13 @@ import { Like, LikeSchema } from './entities/like.entity';
 import { LikeDAO } from './like.dao';
 import { LikeQueue } from './like.queue';
 import { QueueModule } from '../queue/queue.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Like.name, schema: LikeSchema }]),
     forwardRef(() => QueueModule),
+    UserModule,
   ],
   controllers: [LikeController],
   providers: [LikeService, LikeDAO, LikeQueue],

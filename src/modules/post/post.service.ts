@@ -6,13 +6,16 @@ import { PostDAO } from './post.dao';
 import { messages } from 'src/message.config';
 import { ObjectID } from '@utils/mongodb.util';
 import { PostQueue } from './post.queue';
+import { CommonService } from '../common/common.service';
 
 @Injectable()
-export class PostService {
+export class PostService extends CommonService<PostDocument> {
   constructor(
     private readonly postDAO: PostDAO,
     private readonly postQueue: PostQueue,
-  ) {}
+  ) {
+    super(postDAO);
+  }
 
   /**
    * API for create post
@@ -82,17 +85,5 @@ export class PostService {
 
   async findOne(query: object): Promise<PostDocument> {
     return await this.postDAO.findOne(query);
-  }
-
-  async create(createData: object) {
-    return await this.postDAO.create(createData);
-  }
-
-  async findByIdAndUpdate(id: string, update: object) {
-    return await this.postDAO.findByIdAndUpdate(id, update);
-  }
-
-  async findByIdAndDelete(id: string) {
-    return await this.postDAO.findByIdAndDelete(id);
   }
 }

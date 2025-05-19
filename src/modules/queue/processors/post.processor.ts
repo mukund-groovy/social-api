@@ -60,13 +60,13 @@ export class PostProcessor implements OnModuleInit, OnModuleDestroy {
     await this.worker?.close();
   }
 
-  private async createPost(data: any) {
+  private async createPost(data: object) {
     await this.postService.create(data);
     // TODO: upload file
     return { success: true };
   }
 
-  private async updatePost(id: string, data: any) {
+  private async updatePost(id: string, data: object) {
     await this.postService.findByIdAndUpdate(id, data);
     // TODO: upload file
     return { success: true };

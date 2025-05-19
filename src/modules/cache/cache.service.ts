@@ -20,6 +20,9 @@ export class CacheService {
     return `${this.prefix}:${key}`;
   }
 
+  public async getRedis() {
+    return this.redis; // Try to ping Redis to check its availability
+  }
   // Check if Redis is available
   private async checkRedisAvailability() {
     try {
@@ -199,5 +202,30 @@ export class CacheService {
     } catch (error) {
       console.error('Error updating key in group index in Redis:', error);
     }
+  }
+
+  async incr(key: string) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.incr(this.getPrefixedKey(key));
+  }
+
+  async decr(key: string) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.decr(this.getPrefixedKey(key));
+  }
+
+  async sadd(key: string, userId: string) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    await this.redis.sadd(this.getPrefixedKey(key), userId);
+  }
+
+  async srem(key: string, userId: string) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    await this.redis.srem(this.getPrefixedKey(key), userId);
+  }
+
+  async sismember(key: string, userId: string): Promise<boolean> {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return (await this.redis.sismember(this.getPrefixedKey(key), userId)) === 1;
   }
 }
