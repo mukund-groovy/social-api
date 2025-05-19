@@ -22,3 +22,8 @@ export function getEnv<T = string>(key: string, defaultValue?: T): T {
 
   return value;
 }
+
+export function getPrefixedQueueName(baseName: string): string {
+  const prefix = configService.get<string>('REDIS_PREFIX') || 'DEV';
+  return `${prefix}${baseName}`;
+}

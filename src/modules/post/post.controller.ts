@@ -13,8 +13,6 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { AddCommentDto } from './dto/add-comment.dto';
 import { CommentListDto } from './dto/comment-list.dto';
-import { LikeDto } from './dto/like.dto';
-import { UserLikeDto } from './dto/user-like.dto';
 
 @Controller('post')
 export class PostController {
@@ -109,29 +107,5 @@ export class PostController {
     @Query() commentListDto: CommentListDto,
   ) {
     return await this.postService.commentList(id, commentListDto);
-  }
-
-  /**
-   * API for post like dislike
-   * @param likeDto
-   * @returns
-   */
-  @Post('like-dislike')
-  async likeDislike(@Body() likeDto: LikeDto) {
-    return await this.postService.likeDislike(likeDto);
-  }
-
-  /**
-   * API for post likes user list
-   * @param postId
-   * @param query
-   * @returns
-   */
-  @Get('like-user-list/:postId')
-  async likeUserList(
-    @Param('postId') postId: string,
-    @Query() userLikeDto: UserLikeDto,
-  ) {
-    return await this.postService.likeUserList(postId, userLikeDto);
   }
 }

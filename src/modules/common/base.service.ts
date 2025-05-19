@@ -1,3 +1,4 @@
+import { DeleteOptions, UpdateOptions } from 'mongodb';
 import { BaseDAO } from '../common/base.dao';
 import {
   FilterQuery,
@@ -92,5 +93,19 @@ export abstract class BaseService<T extends Document> {
     skip: 0,
   ): Promise<T[]> {
     return this.dao.paginate(filter, limit, skip);
+  }
+
+  //Update one document at a time
+  async updateOne(
+    filter: FilterQuery<T>,
+    update: UpdateQuery<T>,
+    options?: UpdateOptions,
+  ) {
+    return this.dao.updateOne(filter, update, options);
+  }
+
+  //Delete one document at a time
+  async deleteOne(filter: FilterQuery<T>, options?: DeleteOptions) {
+    return this.dao.deleteOne(filter, options);
   }
 }

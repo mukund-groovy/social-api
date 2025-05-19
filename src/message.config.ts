@@ -16,5 +16,6 @@ export const messages = {
   SOMETHING_WENT_WRONG: 'Something went wrong.',
   UNKNOWN_ERROR: 'An unknown error occurred',
   POST_LIKED: 'Post liked',
-  POST_DISLIKED: 'Post disliked',
+  POST_UNLIKED: 'Post unliked',
+  NO_IMAGE_FOUND: 'No image found',
 };

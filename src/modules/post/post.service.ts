@@ -10,13 +10,8 @@ import { PostCommentDAO } from './comment.dao';
 import { sortFilterPagination } from '@utils/function.util';
 import { isDefined } from '@utils/lodash.util';
 import { CommentListDto } from './dto/comment-list.dto';
-import { LikeDto } from './dto/like.dto';
-import { PostLikeDAO } from './like.dao';
-import { Type } from './post.constant';
-import { UserLikeDto } from './dto/user-like.dto';
 import { PostCommentDocument } from './entities/post-comment.entity';
 import { PaginatedResponse } from 'src/common/interface/response.interface';
-import { PostLikeDocument } from './entities/post-like.entity';
 import { PostQueue } from './post.queue';
 
 @Injectable()
@@ -24,7 +19,6 @@ export class PostService {
   constructor(
     private readonly postDAO: PostDAO,
     private readonly commentDAO: PostCommentDAO,
-    private readonly likeDAO: PostLikeDAO,
     private readonly postQueue: PostQueue,
   ) {}
 
@@ -253,104 +247,6 @@ export class PostService {
     delete criteria.count;
 
     const dataResponse = await this.commentDAO.getCommentList(criteria);
-    if (dataResponse.type !== 'list') {
-      throw new Error('Expected list result, but got count');
-    }
-
-    return {
-      data: dataResponse.data,
-      total_count: total_record,
-      prev_enable: prev_enable,
-      next_enable: next_enable,
-      total_pages: total_pages,
-      per_page: per_page,
-      page: page,
-    };
-  }
-
-  /**
-   * API for post like unlike
-   * @param LikeDto
-   * @returns
-   */
-  public async likeDislike(likeDto: LikeDto): Promise<{ message: string }> {
-    const postData = await this.postDAO.findOne({
-      _id: ObjectID(likeDto.postId),
-      isDeleted: { $ne: true },
-    });
-
-    if (!postData) {
-      throw new NotFoundException(messages.POST_NOT_FOUND);
-    }
-
-    const findLikeData = await this.likeDAO.findOne({
-      postId: ObjectID(likeDto.postId),
-      userId: ObjectID(likeDto.userId),
-    });
-
-    const dtl: any = {
-      postId: likeDto.postId,
-      userId: likeDto.userId,
-    };
-
-    if (likeDto.type === Type.LIKE && !findLikeData) {
-      await this.likeDAO.create(dtl);
-    } else if (likeDto.type === Type.DISLIKE && findLikeData) {
-      await this.likeDAO.findOneAndDelete(dtl);
-    }
-
-    const msg =
-      likeDto.type === Type.LIKE ? messages.POST_LIKED : messages.POST_DISLIKED;
-
-    return {
-      message: msg,
-    };
-  }
-
-  /**
-   * API for post likes user list
-   * @param id
-   * @param param
-   * @returns
-   */
-  public async likeUserList(
-    id: string,
-    userLikeDto: UserLikeDto,
-  ): Promise<PaginatedResponse<PostLikeDocument>> {
-    const criteria: any = {};
-    criteria.match = {
-      postId: ObjectID(id),
-    };
-    criteria.count = true;
-
-    const countResponse = await this.likeDAO.getLikeUserList(criteria);
-    if (countResponse.type !== 'count') {
-      throw new Error('Expected count result, but got list');
-    }
-    const total_record = countResponse.data;
-
-    const {
-      per_page,
-      page,
-      total_pages,
-      prev_enable,
-      next_enable,
-      start_from,
-      sort,
-    } = sortFilterPagination(
-      userLikeDto.page,
-      userLikeDto.perPage,
-      total_record,
-      null,
-      'createdAt',
-      1,
-    );
-    criteria.start_from = start_from;
-    criteria.per_page = per_page;
-    criteria.sort = sort;
-    delete criteria.count;
-
-    const dataResponse = await this.likeDAO.getLikeUserList(criteria);
     if (dataResponse.type !== 'list') {
       throw new Error('Expected list result, but got count');
     }

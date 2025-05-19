@@ -4,8 +4,11 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { PostProcessor } from '../queue/processors/post.processor';
-import { QUEUE_CONSTANTS } from '../cache/cache.constants';
+import { QUEUE_CONSTANTS } from './queue.constants';
 import { PostModule } from '../post/post.module';
+import { LikeModule } from '../like/like.module';
+import { LikeProcessor } from './processors/like.processor';
+import { getPrefixedQueueName } from '@utils/env.util';
 
 @Module({
   imports: [
@@ -16,10 +19,25 @@ import { PostModule } from '../post/post.module';
       name: QUEUE_CONSTANTS.POST_QUEUE,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
-        const prefix = configService.get<string>('REDIS_PREFIX') || 'DEV';
+      useFactory: async () => {
+        const queueName = getPrefixedQueueName(QUEUE_CONSTANTS.POST_QUEUE);
         return {
-          name: `${prefix}${QUEUE_CONSTANTS.POST_QUEUE}`,
+          name: queueName,
+          defaultJobOptions: {
+            removeOnComplete: false,
+            removeOnFail: false,
+          },
+        };
+      },
+    }),
+    BullModule.registerQueueAsync({
+      name: QUEUE_CONSTANTS.LIKE_QUEUE,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async () => {
+        const queueName = getPrefixedQueueName(QUEUE_CONSTANTS.LIKE_QUEUE);
+        return {
+          name: queueName,
           defaultJobOptions: {
             removeOnComplete: false,
             removeOnFail: false,
@@ -28,9 +46,10 @@ import { PostModule } from '../post/post.module';
       },
     }),
     forwardRef(() => PostModule),
+    LikeModule,
   ],
 
-  providers: [PostProcessor],
+  providers: [PostProcessor, LikeProcessor],
   exports: [BullModule], // export BullModule so queues can be injected in other modules
 })
 export class QueueModule {}

@@ -2,7 +2,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Injectable } from '@nestjs/common';
-import { QUEUE_CONSTANTS } from '../cache/cache.constants';
+import { QUEUE_CONSTANTS } from '../queue/queue.constants';
 
 @Injectable()
 export class PostQueue {

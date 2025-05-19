@@ -1,3 +1,4 @@
+import { DeleteOptions, UpdateOptions } from 'mongodb';
 import {
   Model,
   Document,
@@ -11,8 +12,12 @@ export abstract class BaseDAO<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
 
   // Find all items with a filter
-  async findAll(filter: FilterQuery<T> = {}): Promise<T[]> {
-    return this.model.find(filter).exec();
+  async findAll(
+    filter: FilterQuery<T> = {},
+    projection?: Record<string, any>,
+    options?: QueryOptions,
+  ): Promise<T[]> {
+    return this.model.find(filter, projection, options).exec();
   }
 
   // Find one item by filter
@@ -108,5 +113,19 @@ export abstract class BaseDAO<T extends Document> {
 
   async exists(filter: FilterQuery<T>): Promise<boolean> {
     return this.model.exists(filter).then((res) => !!res);
+  }
+
+  //Update one document at a time
+  async updateOne(
+    filter: FilterQuery<T>,
+    update: UpdateQuery<T>,
+    options?: UpdateOptions,
+  ) {
+    return this.model.updateOne(filter, update, options);
+  }
+
+  //Delete one document at a time
+  async deleteOne(filter: FilterQuery<T>, options?: DeleteOptions) {
+    return this.model.deleteOne(filter, options);
   }
 }

@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { CacheModule } from './cache/cache.module';
+import { LikeModule } from './like/like.module';
 // Add more feature modules here
 
 @Module({
@@ -10,6 +11,8 @@ import { CacheModule } from './cache/cache.module';
     UserModule,
     PostModule,
     CacheModule,
+    LikeModule,
+
     // Include all the modules you want
   ],
 })

@@ -1,3 +1,4 @@
 export const QUEUE_CONSTANTS = {
   POST_QUEUE: '_POST_QUEUE',
+  LIKE_QUEUE: '_LIKE_QUEUE',
 };

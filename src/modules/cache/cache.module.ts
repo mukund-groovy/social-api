@@ -22,6 +22,7 @@ import { UserModule } from 'src/modules/user/user.module';
           host: configService.get('REDIS_HOST') || 'localhost',
           port: Number(configService.get('REDIS_PORT')) || 6379,
           db: Number(configService.get('REDIS_DB')) || 0,
+          maxRetriesPerRequest: null, // required by BullMQ
         },
       }),
     }),
@@ -38,6 +39,7 @@ import { UserModule } from 'src/modules/user/user.module';
           host: configService.get('REDIS_HOST') || 'localhost',
           port: Number(configService.get('REDIS_PORT')) || 6379,
           db: Number(configService.get('REDIS_DB')) || 0,
+          maxRetriesPerRequest: null, // required by BullMQ
         });
       },
       inject: [ConfigService],
@@ -45,6 +47,6 @@ import { UserModule } from 'src/modules/user/user.module';
     CacheService,
   ],
 
-  exports: [CacheService],
+  exports: [CacheService, 'REDIS_CLIENT'],
 })
 export class CacheModule {}
