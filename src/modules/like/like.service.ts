@@ -5,14 +5,12 @@ import { LikeQueue } from './like.queue';
 import { LikeDAO } from './like.dao';
 import { ObjectID } from '@utils/mongodb.util';
 import { UserLikeDto } from './dto/user-like.dto';
-import { ContextService } from 'src/common/context/context.service';
 
 @Injectable()
 export class LikeService {
   constructor(
     private readonly likeQueue: LikeQueue,
     private readonly likeDAO: LikeDAO,
-    private readonly context: ContextService,
   ) {}
 
   /**
