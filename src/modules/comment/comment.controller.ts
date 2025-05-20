@@ -21,7 +21,7 @@ export class CommentController {
    * @param commentDto
    * @returns
    */
-  @Post('add-comment')
+  @Post()
   async addComment(@Body() addCommentDto: AddCommentDto) {
     return await this.commentService.addComment(addCommentDto);
   }
@@ -32,7 +32,7 @@ export class CommentController {
    * @param comment
    * @returns
    */
-  @Put('update-comment/:id')
+  @Put(':id')
   async updateComment(
     @Param('id') id: string,
     @Body('comment') comment: string,
@@ -45,7 +45,7 @@ export class CommentController {
    * @param id
    * @returns
    */
-  @Delete('delete-comment/:id')
+  @Delete(':id')
   async deleteComment(@Param('id') id: string) {
     return await this.commentService.deleteComment(id);
   }
@@ -56,7 +56,7 @@ export class CommentController {
    * @param CommentListDto
    * @returns
    */
-  @Get('comment-list/:postId')
+  @Get(':postId')
   async commentList(
     @Param('postId') postId: string,
     @Query() commentListDto: CommentListDto,

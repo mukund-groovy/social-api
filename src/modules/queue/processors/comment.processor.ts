@@ -26,17 +26,23 @@ export class CommentProcessor implements OnModuleInit, OnModuleDestroy {
     this.worker = new Worker(
       queueName,
       async (job: Job): Promise<any> => {
-        const { postId } = job.data;
+        const { commentId } = job.data;
         const jobData = job.data;
 
         if (job.name === 'add') {
           await this.commentService.create(jobData);
         } else if (job.name === 'update') {
-          await this.commentService.findByIdAndUpdate(postId, jobData);
+          await this.commentService.findByIdAndUpdate(
+            ObjectID(commentId),
+            {
+              comment: jobData.comment,
+            },
+            { _id: 1 },
+          );
         } else if (job.name === 'delete') {
           await this.commentService.updateMany(
             {
-              $or: [{ _id: ObjectID(postId) }, { parentId: postId }],
+              $or: [{ _id: ObjectID(commentId) }, { parentId: commentId }],
             },
             {
               $set: {

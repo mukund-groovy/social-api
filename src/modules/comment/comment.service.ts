@@ -7,8 +7,10 @@ import { messages } from 'src/message.config';
 import { ObjectID } from '@utils/mongodb.util';
 import { CommentQueue } from './comment.queue';
 import { CommentListDto } from './dto/comment-list.dto';
-import { isDefined } from 'class-validator';
+import { isNotEmpty } from 'class-validator';
 import { CommonService } from '../common/common.service';
+import { CacheService } from '../cache/cache.service';
+import { convertToString } from '@utils/lodash.util';
 
 @Injectable()
 export class CommentService extends CommonService<CommentDocument> {
@@ -16,6 +18,7 @@ export class CommentService extends CommonService<CommentDocument> {
     private readonly postService: PostService,
     private readonly commentQueue: CommentQueue,
     private readonly commentDAO: CommentDAO,
+    private readonly cacheService: CacheService,
   ) {
     super(commentDAO);
   }
@@ -47,7 +50,7 @@ export class CommentService extends CommonService<CommentDocument> {
     await this.commentQueue.addComment(createComment);
 
     // Delete Redis cache for that post’s comments
-    // await this.cacheService.delete(`post:${addCommentDto.post_id}:comments`);
+    await this.cacheService.delete(`post:${addCommentDto.postId}:comments`);
 
     return {
       message: messages.COMMENT_ADDED,
@@ -64,7 +67,7 @@ export class CommentService extends CommonService<CommentDocument> {
   public async updateComment(
     id: string,
     comment: string,
-  ): Promise<{ message: string; data: CommentDocument }> {
+  ): Promise<{ message: string; data: object }> {
     const findComment = await this.commentDAO.findOne({
       _id: ObjectID(id),
       isDeleted: { $ne: true },
@@ -74,19 +77,19 @@ export class CommentService extends CommonService<CommentDocument> {
       throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
     const data = {
-      postId: id,
+      commentId: id,
       comment: comment,
     };
     await this.commentQueue.updateComment(data);
 
     // Invalidate Redis cache for that post’s comments
-    // await this.cacheService.delete(
-    //   `post:${convertToString(findComment.postId)}:comments`,
-    // );
+    await this.cacheService.delete(
+      `post:${convertToString(findComment.postId)}:comments`,
+    );
 
     return {
       message: messages.COMMENT_UPDATED,
-      data: findComment,
+      data: { comment },
     };
   }
 
@@ -105,12 +108,12 @@ export class CommentService extends CommonService<CommentDocument> {
       throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
 
-    await this.commentQueue.deleteComment({ postId: id });
+    await this.commentQueue.deleteComment({ commentId: id });
 
     // Invalidate Redis cache for that post’s comments
-    // await this.cacheService.delete(
-    //   `post:${convertToString(findComment.postId)}:comments`,
-    // );
+    await this.cacheService.delete(
+      `post:${convertToString(findComment.postId)}:comments`,
+    );
 
     return {
       message: messages.COMMENT_DELETED,
@@ -124,27 +127,44 @@ export class CommentService extends CommonService<CommentDocument> {
    * @returns
    */
   public async commentList(postId: string, commentListDto: CommentListDto) {
+    const { lastId, parentId, perPage } = commentListDto;
+    const isFirstPage = !lastId && !parentId && !perPage;
+    if (isFirstPage) {
+      const cacheData = await this.cacheService.getCacheFromGroup(
+        `post:${postId}`,
+        'comments',
+      );
+      if (isNotEmpty(cacheData)) {
+        return cacheData;
+      }
+    }
     const query: any = {
       postId: ObjectID(postId),
-      parentId: '0',
+      parentId: parentId ?? '0',
       isDeleted: { $ne: true },
     };
-    if (commentListDto.lastId) {
-      query['_id'] = { $gt: ObjectID(commentListDto.lastId) };
+    if (lastId) {
+      query['_id'] = { $gt: ObjectID(lastId) };
     }
 
-    if (isDefined(commentListDto.parentId)) {
-      query['parentId'] = commentListDto.parentId;
-    }
     const criteria: any = {
       match: query,
-      limit: commentListDto?.perPage,
+      limit: perPage,
     };
 
     const result = await this.commentDAO.getCommentList(criteria);
-    return {
+    const response = {
       comments: result,
       last_id: result.length ? result[result.length - 1]._id : null,
     };
+
+    if (isFirstPage) {
+      await this.cacheService.addCacheToGroup(
+        `post:${postId}`,
+        'comments',
+        response,
+      );
+    }
+    return response;
   }
 }
