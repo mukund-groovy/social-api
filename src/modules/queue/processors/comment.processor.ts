@@ -40,16 +40,9 @@ export class CommentProcessor implements OnModuleInit, OnModuleDestroy {
             { _id: 1 },
           );
         } else if (job.name === 'delete') {
-          await this.commentService.updateMany(
-            {
-              $or: [{ _id: ObjectID(commentId) }, { parentId: commentId }],
-            },
-            {
-              $set: {
-                isDeleted: true,
-              },
-            },
-          );
+          await this.commentService.deleteMany({
+            $or: [{ _id: ObjectID(commentId) }, { parentId: commentId }],
+          });
         } else {
           throw new Error(`Unknown job type: ${job.name}`);
         }

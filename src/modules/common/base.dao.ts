@@ -128,4 +128,8 @@ export abstract class BaseDAO<T extends Document> {
   async deleteOne(filter: FilterQuery<T>, options?: DeleteOptions) {
     return this.model.deleteOne(filter, options);
   }
+
+  async deleteMany(filter: FilterQuery<T>) {
+    return this.model.deleteMany(filter);
+  }
 }

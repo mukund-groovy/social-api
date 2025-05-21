@@ -45,13 +45,12 @@ export class CommentDAO extends BaseDAO<CommentDocument> {
             {
               $match: {
                 $expr: {
-                  $and: [
-                    { $eq: ['$parentId', '$$parent'] },
-                    { $ne: ['$isDeleted', true] },
-                  ],
+                  $and: [{ $eq: ['$parentId', '$$parent'] }],
                 },
               },
             },
+            { $sort: { _id: -1 } },
+            { $limit: 1 },
           ],
           as: 'totalReply',
         },

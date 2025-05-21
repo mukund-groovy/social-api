@@ -53,6 +53,10 @@ export abstract class BaseService<T extends Document> {
     return this.dao.findByIdAndDelete(id, select);
   }
 
+  async deleteMany(filter: FilterQuery<T>) {
+    return this.dao.deleteMany(filter);
+  }
+
   // Count the number of documents that match the filter
   async count(filter: FilterQuery<T> = {}): Promise<number> {
     return this.dao.count(filter);

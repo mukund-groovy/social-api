@@ -101,7 +101,6 @@ export class CommentService extends CommonService<CommentDocument> {
   public async deleteComment(id: string): Promise<{ message: string }> {
     const findComment = await this.commentDAO.findOne({
       _id: ObjectID(id),
-      isDeleted: { $ne: true },
     });
 
     if (!findComment) {
@@ -140,11 +139,12 @@ export class CommentService extends CommonService<CommentDocument> {
     }
     const query: any = {
       postId: ObjectID(postId),
-      parentId: parentId ?? '0',
-      isDeleted: { $ne: true },
     };
     if (lastId) {
       query['_id'] = { $gt: ObjectID(lastId) };
+    }
+    if (parentId) {
+      query['parentId'] = ObjectID(parentId);
     }
 
     const criteria: any = {
