@@ -11,6 +11,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ObjectID } from '@utils/mongodb.util';
 import { CacheService } from '../cache/cache.service';
+import { isNotEmpty } from '@utils/lodash.util';
 
 @Injectable()
 export class UserService extends CommonService<UserDocument> {
@@ -31,6 +32,11 @@ export class UserService extends CommonService<UserDocument> {
       throw new ConflictException(messages.USER_ALREADY_EXIST);
     }
 
+    if (!createUser?.displayName) {
+      createUser.displayName =
+        `${createUser.firstName} ${createUser.lastName}`.trim();
+    }
+
     const user = await this.userDAO.create(createUser);
     return {
       message: messages.USER_SAVE,
@@ -42,13 +48,27 @@ export class UserService extends CommonService<UserDocument> {
     id: string,
     updateUser: UpdateUserDto,
   ): Promise<{ message: string; data: UserDocument }> {
+    const existUser = await this.userDAO.findOne({ userId: ObjectID(id) });
+    if (!existUser) {
+      throw new NotFoundException(messages.USER_NOT_FOUND);
+    }
+
+    const newDisplayName = updateUser.displayName?.trim();
+
+    if (
+      isNotEmpty(newDisplayName) &&
+      newDisplayName !== existUser.displayName
+    ) {
+      updateUser.displayName = newDisplayName;
+    } else {
+      updateUser.displayName =
+        `${updateUser.firstName} ${updateUser.lastName}`.trim();
+    }
+
     const user = await this.userDAO.findOneAndUpdate(
       { userId: ObjectID(id) },
       updateUser,
     );
-    if (!user) {
-      throw new NotFoundException(messages.USER_NOT_FOUND);
-    }
     return {
       message: messages.USER_UPDATED,
       data: user,

@@ -108,25 +108,14 @@ export class LikeService extends CommonService<LikeDocument> {
     const users = await this.userService.findAll(userFilter, {
       _id: 1,
       userId: 1,
-      user_name: {
+      userName: {
         $concat: [
           { $ifNull: ['$firstName', ''] },
           ' ',
           { $ifNull: ['$lastName', ''] },
         ],
       },
-      display_name: {
-        $ifNull: [
-          '$displayName',
-          {
-            $concat: [
-              { $ifNull: ['$firstName', ''] },
-              ' ',
-              { $ifNull: ['$lastName', ''] },
-            ],
-          },
-        ],
-      },
+      displayName: 1,
     });
 
     // Map for fast lookup
