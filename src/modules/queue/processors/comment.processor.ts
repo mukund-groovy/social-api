@@ -30,7 +30,8 @@ export class CommentProcessor implements OnModuleInit, OnModuleDestroy {
         const jobData = job.data;
 
         if (job.name === 'add') {
-          await this.commentService.create(jobData);
+          const data = await this.commentService.create(jobData);
+          this.commentService.updateCommentDataInRedis(data, jobData.commentId);
         } else if (job.name === 'update') {
           await this.commentService.findByIdAndUpdate(
             ObjectID(commentId),

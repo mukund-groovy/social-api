@@ -257,4 +257,34 @@ export class CacheService {
       count,
     );
   }
+
+  async rpush(key: string, value: any) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.rpush(this.getPrefixedKey(key), value);
+  }
+
+  async lpush(key: string, value: any) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.lpush(this.getPrefixedKey(key), value);
+  }
+
+  async ltrim(key: string, startIndex: number, endIndex: number) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.ltrim(this.getPrefixedKey(key), startIndex, endIndex);
+  }
+
+  async lrange(key: string, start: number, end: number) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return await this.redis.lrange(this.getPrefixedKey(key), start, end);
+  }
+
+  async lset(key: string, index: number, value: any) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.lset(this.getPrefixedKey(key), index, value);
+  }
+
+  async lrem(key: string, count: number, element: any) {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.lrem(this.getPrefixedKey(key), count, element);
+  }
 }

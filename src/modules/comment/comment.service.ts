@@ -11,6 +11,7 @@ import { isNotEmpty } from 'class-validator';
 import { CommonService } from '../common/common.service';
 import { CacheService } from '../cache/cache.service';
 import { convertToString } from '@utils/lodash.util';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class CommentService extends CommonService<CommentDocument> {
@@ -45,12 +46,17 @@ export class CommentService extends CommonService<CommentDocument> {
       comment: addCommentDto.comment,
       postId: addCommentDto.postId,
       userId: addCommentDto.userId,
+      commentId: randomUUID(),
     };
+    const redisKey = `post:${addCommentDto.postId}:comments`;
+
+    // Add new comment to the start of the list
+    await this.cacheService.lpush(redisKey, JSON.stringify(createComment));
+
+    // Keep only the latest 10 comments (index 0 to 9)
+    await this.cacheService.ltrim(redisKey, 0, 9);
 
     await this.commentQueue.addComment(createComment);
-
-    // Delete Redis cache for that post’s comments
-    await this.cacheService.delete(`post:${addCommentDto.postId}:comments`);
 
     return {
       message: messages.COMMENT_ADDED,
@@ -68,7 +74,7 @@ export class CommentService extends CommonService<CommentDocument> {
     id: string,
     comment: string,
   ): Promise<{ message: string; data: object }> {
-    const findComment = await this.commentDAO.findOne({
+    const findComment: any = await this.commentDAO.findOne({
       _id: ObjectID(id),
       isDeleted: { $ne: true },
     });
@@ -77,15 +83,13 @@ export class CommentService extends CommonService<CommentDocument> {
       throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
     const data = {
+      _id: id,
       commentId: id,
       comment: comment,
+      postId: findComment.postId,
     };
+    await this.updateCommentDataInRedis(data, id);
     await this.commentQueue.updateComment(data);
-
-    // Invalidate Redis cache for that post’s comments
-    await this.cacheService.delete(
-      `post:${convertToString(findComment.postId)}:comments`,
-    );
 
     return {
       message: messages.COMMENT_UPDATED,
@@ -99,20 +103,17 @@ export class CommentService extends CommonService<CommentDocument> {
    * @returns
    */
   public async deleteComment(id: string): Promise<{ message: string }> {
-    const findComment = await this.commentDAO.findOne({
+    const findComment: any = await this.commentDAO.findOne({
       _id: ObjectID(id),
     });
 
     if (!findComment) {
       throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
+    //remove comment from redis
+    await this.deleteCommentInRedis(id, findComment.postId);
 
     await this.commentQueue.deleteComment({ commentId: id });
-
-    // Invalidate Redis cache for that post’s comments
-    await this.cacheService.delete(
-      `post:${convertToString(findComment.postId)}:comments`,
-    );
 
     return {
       message: messages.COMMENT_DELETED,
@@ -166,5 +167,42 @@ export class CommentService extends CommonService<CommentDocument> {
       );
     }
     return response;
+  }
+
+  public async updateCommentDataInRedis(
+    data: any,
+    commentId: string,
+  ): Promise<boolean> {
+    const key = `post:${data?.postId}:comments`;
+    const comments = await this.cacheService.lrange(key, 0, -1);
+
+    for (let i = 0; i < comments.length; i++) {
+      const parsed = JSON.parse(comments[i]);
+
+      if (parsed.commentId === commentId) {
+        parsed.commentId = data?._id;
+        parsed.comment = data?.comment;
+        await this.cacheService.lset(key, i, JSON.stringify(parsed));
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public async deleteCommentInRedis(
+    commentId: string,
+    postId: string,
+  ): Promise<boolean> {
+    const key = `post:${postId}:comments`;
+    const allComments = await this.cacheService.lrange(key, 0, -1);
+
+    // Find the exact full string of the comment you want to remove
+    const fullCommentString = allComments.find((c) => c.includes(commentId));
+
+    if (fullCommentString) {
+      await this.cacheService.lrem(key, 0, fullCommentString);
+    }
+    return true;
   }
 }
