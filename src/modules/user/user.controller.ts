@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { SignatureAuthGuard } from 'src/auth/guards/signature-auth.guard';
+import { SignatureAuthGuard } from 'src/common/guards/signature-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 

@@ -5,7 +5,7 @@ import { USER_TYPE } from '../user.constant';
 export type UserDocument = User & Document;
 @Schema({ timestamps: true })
 export class User {
-  @Prop({ type: SchemaTypes.ObjectId, required: true })
+  @Prop({ type: SchemaTypes.ObjectId, required: true, index: true })
   userId: ObjectId;
 
   @Prop({ type: String, required: true })
@@ -34,4 +34,3 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-UserSchema.index({ userId: 'text' });

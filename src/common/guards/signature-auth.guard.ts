@@ -53,7 +53,7 @@ export class SignatureAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid signature');
     }
 
-    const user = await this.userService.findOne({ userId: ObjectID(userId) });
+    const user = await this.userService.checkUser(userId);
     if (!user) {
       throw new BadRequestException('User not found');
     }

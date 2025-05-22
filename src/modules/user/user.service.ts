@@ -10,9 +10,14 @@ import { messages } from '../../message.config';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ObjectID } from '@utils/mongodb.util';
+import { CacheService } from '../cache/cache.service';
+
 @Injectable()
 export class UserService extends CommonService<UserDocument> {
-  constructor(private readonly userDAO: UserDAO) {
+  constructor(
+    private readonly userDAO: UserDAO,
+    private readonly cacheService: CacheService,
+  ) {
     super(userDAO);
   }
 
@@ -67,6 +72,30 @@ export class UserService extends CommonService<UserDocument> {
     if (!user) {
       throw new NotFoundException(messages.USER_NOT_FOUND);
     }
+    return user;
+  }
+
+  async checkUser(userId: string): Promise<UserDocument> {
+    const cached: any = await this.cacheService.getCacheFromGroup(
+      'users',
+      userId,
+    );
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    const user = await this.userDAO.findOne({ userId: ObjectID(userId) });
+    if (!user) {
+      throw new NotFoundException(messages.USER_NOT_FOUND);
+    }
+
+    await this.cacheService.addCacheToGroup(
+      'users',
+      userId,
+      JSON.stringify(user),
+      3600,
+    );
+
     return user;
   }
 }

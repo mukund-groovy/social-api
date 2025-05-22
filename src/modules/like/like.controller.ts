@@ -10,7 +10,7 @@ import {
 import { LikeService } from './like.service';
 import { LikeUnlikeDto } from './dto/like-unlike.dto';
 import { UserLikeDto } from './dto/user-like.dto';
-import { SignatureAuthGuard } from 'src/auth/guards/signature-auth.guard';
+import { SignatureAuthGuard } from 'src/common/guards/signature-auth.guard';
 
 @Controller('like')
 export class LikeController {
