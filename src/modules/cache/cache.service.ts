@@ -214,18 +214,47 @@ export class CacheService {
     return this.redis.decr(this.getPrefixedKey(key));
   }
 
-  async sadd(key: string, userId: string) {
+  async zadd(key: string, timeStamp: number, userId: string): Promise<number> {
     if (!this.redisAvailable) return; // Skip if Redis is not available
-    await this.redis.sadd(this.getPrefixedKey(key), userId);
+    await this.redis.zadd(this.getPrefixedKey(key), timeStamp, userId);
   }
 
-  async srem(key: string, userId: string) {
+  async zrem(key: string, userId: string): Promise<number> {
     if (!this.redisAvailable) return; // Skip if Redis is not available
-    await this.redis.srem(this.getPrefixedKey(key), userId);
+    await this.redis.zrem(this.getPrefixedKey(key), userId);
   }
 
-  async sismember(key: string, userId: string): Promise<boolean> {
+  async zrank(key: string, userId: string): Promise<number | null> {
     if (!this.redisAvailable) return; // Skip if Redis is not available
-    return (await this.redis.sismember(this.getPrefixedKey(key), userId)) === 1;
+    return await this.redis.zrank(this.getPrefixedKey(key), userId);
+  }
+
+  async zrange(key: string, limit: number | string): Promise<string[]> {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return await this.redis.zrange(this.getPrefixedKey(key), 0, limit);
+  }
+
+  async zscore(key: string, lastId: string): Promise<string | null> {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return await this.redis.zscore(this.getPrefixedKey(key), lastId);
+  }
+
+  async zrangebyscore(
+    key: string,
+    min: number | string,
+    max: number | string,
+    offsetCountToken: 'LIMIT',
+    offset: number | string,
+    count: number | string,
+  ): Promise<string[]> {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return await this.redis.zrangebyscore(
+      this.getPrefixedKey(key),
+      min,
+      max,
+      offsetCountToken,
+      offset,
+      count,
+    );
   }
 }

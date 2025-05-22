@@ -9,6 +9,7 @@ import { CommonService } from '../common/common.service';
 import { LikeDocument } from './entities/like.entity';
 import { CacheService } from '../cache/cache.service';
 import { convertToString } from '@utils/lodash.util';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class LikeService extends CommonService<LikeDocument> {
@@ -16,6 +17,7 @@ export class LikeService extends CommonService<LikeDocument> {
     private readonly likeQueue: LikeQueue,
     private readonly likeDAO: LikeDAO,
     private readonly cacheService: CacheService,
+    private readonly userService: UserService,
   ) {
     super(likeDAO);
   }
@@ -30,7 +32,11 @@ export class LikeService extends CommonService<LikeDocument> {
     const userId = convertToString(user.userId);
 
     await this.cacheService.incr(`post:${likeDto.postId}:likes`);
-    await this.cacheService.sadd(`post:${likeDto.postId}:likers`, userId);
+    await this.cacheService.zadd(
+      `post:${likeDto.postId}:likers`,
+      Date.now(),
+      userId,
+    );
 
     const insertData = { userId, postId: likeDto.postId };
 
@@ -50,7 +56,7 @@ export class LikeService extends CommonService<LikeDocument> {
     const userId = convertToString(user.userId);
 
     await this.cacheService.decr(`post:${unlikeDto.postId}:likes`);
-    await this.cacheService.srem(`post:${unlikeDto.postId}:likers`, userId);
+    await this.cacheService.zrem(`post:${unlikeDto.postId}:likers`, userId);
 
     const insertData = { userId, postId: unlikeDto.postId };
     await this.likeQueue.enqueueUnlike(insertData);
@@ -66,21 +72,74 @@ export class LikeService extends CommonService<LikeDocument> {
    * @returns
    */
   async likeUserList(postId: string, userLikeDto: UserLikeDto) {
-    const query: any = { postId: ObjectID(postId) };
+    let userIds: string[];
+    const limit = userLikeDto?.perPage || 10;
+    if (!userLikeDto.lastId) {
+      // First page
+      userIds = await this.cacheService.zrange(
+        `post:${postId}:likers`,
+        limit - 1,
+      );
+    } else {
+      // Get score of the last user
+      const lastScore = await this.cacheService.zscore(
+        `post:${postId}:likers`,
+        convertToString(userLikeDto.lastId),
+      );
+      if (!lastScore) return { users: [], nextCursor: null };
 
-    if (userLikeDto.lastId) {
-      query._id = { $gt: userLikeDto.lastId }; // fetch after last_id
+      // Next page after lastScore
+      userIds = await this.cacheService.zrangebyscore(
+        `post:${postId}:likers`,
+        `(${lastScore}`, // exclusive range
+        '+inf',
+        'LIMIT',
+        0,
+        limit,
+      );
     }
 
-    const criteria: any = {
-      match: query,
-      limit: userLikeDto?.perPage,
-    };
+    if (userIds.length === 0) return { users: [], nextCursor: null };
 
-    const result = await this.likeDAO.getLikeUserList(criteria);
+    // Fetch user data from MongoDB
+    const userFilter = {
+      userId: { $in: userIds.map((id) => ObjectID(id)) },
+    };
+    const users = await this.userService.findAll(userFilter, {
+      _id: 1,
+      userId: 1,
+      user_name: {
+        $concat: [
+          { $ifNull: ['$firstName', ''] },
+          ' ',
+          { $ifNull: ['$lastName', ''] },
+        ],
+      },
+      display_name: {
+        $ifNull: [
+          '$displayName',
+          {
+            $concat: [
+              { $ifNull: ['$firstName', ''] },
+              ' ',
+              { $ifNull: ['$lastName', ''] },
+            ],
+          },
+        ],
+      },
+    });
+
+    // Map for fast lookup
+    const userMap = new Map(
+      users.map((user) => [convertToString(user.userId), user]),
+    );
+
+    // Reorder
+    const orderedUsers = userIds.map((id) => userMap.get(id)).filter(Boolean);
+
     return {
-      users: result,
-      last_id: result.length ? result[result.length - 1]._id : null,
+      users: orderedUsers,
+      nextCursor: userIds[userIds.length - 1], // for next call
     };
   }
 }

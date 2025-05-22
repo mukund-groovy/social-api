@@ -11,7 +11,6 @@ export class CommentQueue {
   ) {}
 
   async addComment(addData) {
-    console.log('add queue');
     await this.commentQueue.add('add', addData);
   }
 

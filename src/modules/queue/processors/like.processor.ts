@@ -24,22 +24,22 @@ export class LikeProcessor implements OnModuleInit, OnModuleDestroy {
         const { userId, postId } = job.data;
 
         if (job.name === 'like') {
-          const hasLiked = await this.cacheService.sismember(
+          const hasLiked = await this.cacheService.zrank(
             `post:${postId}:likers`,
             userId,
           );
-          if (!hasLiked) return;
+          if (hasLiked == null) return;
           await this.likeService.updateOne(
             { userId, postId },
             { $setOnInsert: { userId, postId } },
             { upsert: true },
           );
         } else if (job.name === 'unlike') {
-          const stillLiked = await this.cacheService.sismember(
+          const stillLiked = await this.cacheService.zrank(
             `post:${postId}:likers`,
             userId,
           );
-          if (stillLiked) return;
+          if (stillLiked !== null) return;
           await this.likeService.findOneAndDelete({ userId, postId });
         } else {
           throw new Error(`Unknown job type: ${job.name}`);

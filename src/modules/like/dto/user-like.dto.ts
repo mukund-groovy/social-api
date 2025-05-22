@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsInt,
   IsMongoId,
-  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -20,6 +20,7 @@ export class UserLikeDto {
   @ApiProperty()
   @IsInt()
   @IsOptional()
+  @Transform(({ value }) => Number.parseInt(value))
   @Min(1)
   @Max(100)
   perPage: number;

@@ -12,8 +12,12 @@ export abstract class BaseService<T extends Document> {
   constructor(protected readonly dao: BaseDAO<T>) {}
 
   // Find all items with an optional filter
-  async findAll(filter: FilterQuery<T> = {}): Promise<T[]> {
-    return this.dao.findAll(filter);
+  async findAll(
+    filter: FilterQuery<T> = {},
+    projection?: Record<string, any>,
+    options?: QueryOptions,
+  ): Promise<T[]> {
+    return this.dao.findAll(filter, projection, options);
   }
 
   // Find one item by filter
