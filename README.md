@@ -71,3 +71,34 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+## Queue Names & Job Payload Reference
+
+1. POST_QUEUE
+
+- Used for saving and updating post data.
+
+| Job Name | Payload Variables                                                         | Description             |
+| -------- | ------------------------------------------------------------------------- | ----------------------- |
+| `create` | `description: string`,`userId: string`, `type: string`                    | Save new a post         |
+| `update` | `description: string`,`userId: string`, `postId: string` , `type: string` | Update an existing post |
+| `delete` | `postId: string` , `type: string`                                         | delete a post           |
+
+2. LIKE_QUEUE
+
+- Used for liking or unliking posts.
+
+| Job Name | Payload Variables                  | Description   |
+| -------- | ---------------------------------- | ------------- |
+| `like`   | `userId: string`, `postId: string` | Like a post   |
+| `unlike` | `userId: string`, `postId: string` | Unlike a post |
+
+3. COMMENT_QUEUE
+
+- Used for adding, updating, or deleting comments on posts.
+
+| Job Name | Payload Variables                                                       | Description                |
+| -------- | ----------------------------------------------------------------------- | -------------------------- |
+| `add`    | `parentId: string`,`comment: string`,`postId: string`, `userId: string` | Add a new comment on post  |
+| `update` | `commentId: string`, `comment: string`                                  | Update an existing comment |
+| `delete` | `commentId: string`                                                     | Delete a comment           |
