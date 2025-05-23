@@ -1,4 +1,10 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ObjectId } from 'mongoose';
 
 export class CreatePostDto {
@@ -8,9 +14,10 @@ export class CreatePostDto {
 
   @IsArray()
   @IsOptional()
-  photos: [];
+  media: [];
 
   @IsString()
   @IsNotEmpty()
-  userId: ObjectId;
+  @IsMongoId()
+  userId: string;
 }

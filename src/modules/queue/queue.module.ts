@@ -11,11 +11,12 @@ import { LikeProcessor } from './processors/like.processor';
 import { getPrefixedQueueName } from '@utils/env.util';
 import { CommentModule } from '../comment/comment.module';
 import { CommentProcessor } from './processors/comment.processor';
+import { FailedJobModule } from '../failed-job/failed-job.module';
 
 @Module({
   imports: [
     ConfigModule,
-
+    FailedJobModule,
     // Register the post queue here
     BullModule.registerQueueAsync({
       name: QUEUE_CONSTANTS.POST_QUEUE,
@@ -26,7 +27,9 @@ import { CommentProcessor } from './processors/comment.processor';
         return {
           name: queueName,
           defaultJobOptions: {
-            removeOnComplete: false,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 1000 },
+            removeOnComplete: true,
             removeOnFail: false,
           },
         };

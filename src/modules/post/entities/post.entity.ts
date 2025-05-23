@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, ObjectId, SchemaTypes } from 'mongoose';
 
 export type PostDocument = Post & Document;
-@Schema({ timestamps: true, collection: 'post' })
+@Schema({ timestamps: true, collection: 'posts' })
 export class Post {
   @Prop({ type: SchemaTypes.ObjectId, required: true })
   userId: ObjectId;
@@ -11,7 +11,7 @@ export class Post {
   description: string;
 
   @Prop({ type: Array, default: [] })
-  photos: [];
+  media: [];
 
   @Prop({ type: Array })
   reportPost: [];

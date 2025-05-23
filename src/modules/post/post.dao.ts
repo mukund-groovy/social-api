@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Post, PostDocument } from './entities/post.schema';
+import { Post, PostDocument } from './entities/post.entity';
 import { BaseDAO } from '../common/base.dao';
 
 @Injectable()

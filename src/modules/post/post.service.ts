@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { PostDocument } from './entities/post.schema';
+import { PostDocument } from './entities/post.entity';
 import { PostDAO } from './post.dao';
 import { messages } from 'src/message.config';
 import { ObjectID } from '@utils/mongodb.util';
 import { PostQueue } from './post.queue';
 import { CommonService } from '../common/common.service';
+import {
+  CreatePostJobData,
+  DeletePostJobData,
+  UpdatePostJobData,
+} from '../queue/job.interfaces';
 
 @Injectable()
 export class PostService extends CommonService<PostDocument> {
@@ -25,7 +30,7 @@ export class PostService extends CommonService<PostDocument> {
   public async createPost(
     createPostDto: CreatePostDto,
   ): Promise<{ message: string }> {
-    const data = {
+    const data: CreatePostJobData = {
       ...createPostDto,
       type: 'create',
     };
@@ -48,7 +53,7 @@ export class PostService extends CommonService<PostDocument> {
     if (!post) {
       throw new NotFoundException(messages.POST_NOT_FOUND);
     }
-    const data = {
+    const data: UpdatePostJobData = {
       ...updatePostDto,
       type: 'update',
       postId: ObjectID(id),
@@ -67,9 +72,9 @@ export class PostService extends CommonService<PostDocument> {
     if (!post) {
       throw new NotFoundException(messages.POST_NOT_FOUND);
     }
-    const data = {
+    const data: DeletePostJobData = {
       type: 'delete',
-      postId: ObjectID(id),
+      postId: id,
     };
     await this.postQueue.addPostJob(data);
     return { message: messages.POST_DELETE };

@@ -6,6 +6,7 @@ import { CacheModule } from './cache/cache.module';
 import { LikeModule } from './like/like.module';
 import { CommentModule } from './comment/comment.module';
 import { MediaModule } from './media/media.module';
+import { FailedJobModule } from './failed-job/failed-job.module';
 // Add more feature modules here
 
 @Module({
@@ -16,6 +17,7 @@ import { MediaModule } from './media/media.module';
     LikeModule,
     CommentModule,
     MediaModule,
+    FailedJobModule,
 
     // Include all the modules you want
   ],
