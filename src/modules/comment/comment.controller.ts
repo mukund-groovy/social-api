@@ -7,10 +7,12 @@ import {
   Param,
   Delete,
   Controller,
+  UseGuards,
 } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { AddCommentDto } from './dto/create-comment.dto';
 import { CommentListDto } from './dto/comment-list.dto';
+import { SignatureAuthGuard } from 'src/common/guards/signature-auth.guard';
 
 @Controller('comment')
 export class CommentController {
@@ -21,6 +23,7 @@ export class CommentController {
    * @param commentDto
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Post()
   async addComment(@Body() addCommentDto: AddCommentDto) {
     return await this.commentService.addComment(addCommentDto);
@@ -32,6 +35,7 @@ export class CommentController {
    * @param comment
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Put(':id')
   async updateComment(
     @Param('id') id: string,
@@ -45,6 +49,7 @@ export class CommentController {
    * @param id
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Delete(':id')
   async deleteComment(@Param('id') id: string) {
     return await this.commentService.deleteComment(id);
@@ -56,6 +61,7 @@ export class CommentController {
    * @param CommentListDto
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Get(':postId')
   async commentList(
     @Param('postId') postId: string,

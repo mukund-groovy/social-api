@@ -7,12 +7,14 @@ import { QueueModule } from '../queue/queue.module';
 import { CommentDAO } from './comment.dao';
 import { PostModule } from '../post/post.module';
 import { CommentQueue } from './comment.queue';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }]),
     forwardRef(() => QueueModule),
     forwardRef(() => PostModule),
+    UserModule,
   ],
   controllers: [CommentController],
   providers: [CommentService, CommentDAO, CommentQueue],

@@ -1,15 +1,10 @@
-import {
-  Inject,
-  Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
-} from '@nestjs/common';
-import Redis from 'ioredis';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Worker, Job } from 'bullmq';
 import { ObjectID } from '@utils/mongodb.util';
 import { QUEUE_CONSTANTS } from '../queue.constants';
 import { getPrefixedQueueName } from '@utils/env.util';
 import { CommentService } from 'src/modules/comment/comment.service';
+import { CacheService } from 'src/modules/cache/cache.service';
 
 @Injectable()
 export class CommentProcessor implements OnModuleInit, OnModuleDestroy {
@@ -17,10 +12,10 @@ export class CommentProcessor implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly commentService: CommentService,
-    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
+    private readonly cacheService: CacheService,
   ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     const queueName = getPrefixedQueueName(QUEUE_CONSTANTS.COMMENT_QUEUE);
 
     this.worker = new Worker(
@@ -49,7 +44,7 @@ export class CommentProcessor implements OnModuleInit, OnModuleDestroy {
         }
       },
       {
-        connection: this.redisClient,
+        connection: await this.cacheService.getRedis(),
       },
     );
 

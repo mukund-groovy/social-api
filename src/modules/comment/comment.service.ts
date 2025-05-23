@@ -32,9 +32,11 @@ export class CommentService extends CommonService<CommentDocument> {
   public async addComment(
     addCommentDto: AddCommentDto,
   ): Promise<{ message: string; data: CommentDocument }> {
+    const user = await this.getCurrentUser();
+    const userId = convertToString(user.userId);
+
     const findPost = await this.postService.findOne({
       _id: ObjectID(addCommentDto.postId),
-      isDeleted: { $ne: true },
     });
 
     if (!findPost) {
@@ -45,7 +47,7 @@ export class CommentService extends CommonService<CommentDocument> {
       parentId: addCommentDto?.parentId,
       comment: addCommentDto.comment,
       postId: addCommentDto.postId,
-      userId: addCommentDto.userId,
+      userId,
       commentId: randomUUID(),
     };
     const redisKey = `post:${addCommentDto.postId}:comments`;
@@ -76,7 +78,6 @@ export class CommentService extends CommonService<CommentDocument> {
   ): Promise<{ message: string; data: object }> {
     const findComment: any = await this.commentDAO.findOne({
       _id: ObjectID(id),
-      isDeleted: { $ne: true },
     });
 
     if (!findComment) {

@@ -16,10 +16,5 @@ export class AddCommentDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
-  userId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty()
   comment: string;
 }
