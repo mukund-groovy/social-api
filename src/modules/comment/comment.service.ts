@@ -10,7 +10,7 @@ import { CommentListDto } from './dto/comment-list.dto';
 import { isNotEmpty } from 'class-validator';
 import { CommonService } from '../common/common.service';
 import { CacheService } from '../cache/cache.service';
-import { convertToString } from '@utils/lodash.util';
+import { convertToString, isValidAndDefined } from '@utils/lodash.util';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -52,11 +52,16 @@ export class CommentService extends CommonService<CommentDocument> {
     };
     const redisKey = `post:${addCommentDto.postId}:comments`;
 
-    // Add new comment to the start of the list
-    await this.cacheService.lpush(redisKey, JSON.stringify(createComment));
+    if (addCommentDto?.parentId) {
+      //update comment reply in redis
+      await this.updateCommentReplyDataInRedis(createComment);
+    } else {
+      // Add new comment to the start of the list
+      await this.cacheService.lpush(redisKey, JSON.stringify(createComment));
 
-    // Keep only the latest 10 comments (index 0 to 9)
-    await this.cacheService.ltrim(redisKey, 0, 9);
+      // Keep only the latest 10 comments (index 0 to 9)
+      await this.cacheService.ltrim(redisKey, 0, 9);
+    }
 
     await this.commentQueue.addComment(createComment);
 
@@ -84,12 +89,11 @@ export class CommentService extends CommonService<CommentDocument> {
       throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
     const data = {
-      _id: id,
       commentId: id,
       comment: comment,
-      postId: findComment.postId,
     };
-    await this.updateCommentDataInRedis(data, id);
+    findComment.comment = comment;
+    await this.updateCommentDataInRedis(findComment, id);
     await this.commentQueue.updateComment(data);
 
     return {
@@ -112,7 +116,7 @@ export class CommentService extends CommonService<CommentDocument> {
       throw new NotFoundException(messages.COMMENT_NOT_FOUND);
     }
     //remove comment from redis
-    await this.deleteCommentInRedis(id, findComment.postId);
+    await this.deleteCommentInRedis(id, findComment);
 
     await this.commentQueue.deleteComment({ commentId: id });
 
@@ -178,11 +182,19 @@ export class CommentService extends CommonService<CommentDocument> {
     const comments = await this.cacheService.lrange(key, 0, -1);
 
     for (let i = 0; i < comments.length; i++) {
-      const parsed = JSON.parse(comments[i]);
+      let parsed = JSON.parse(comments[i]);
 
-      if (parsed.commentId === commentId) {
-        parsed.commentId = data?._id;
-        parsed.comment = data?.comment;
+      if (convertToString(data?.parentId) === parsed._id) {
+        if (
+          parsed.reply[0].commentId === commentId ||
+          parsed.reply[0]._id === commentId
+        ) {
+          parsed.reply = [data];
+          await this.cacheService.lset(key, i, JSON.stringify(parsed));
+        }
+        return true;
+      } else if (parsed.commentId === commentId || parsed._id === commentId) {
+        parsed = data;
         await this.cacheService.lset(key, i, JSON.stringify(parsed));
         return true;
       }
@@ -191,18 +203,43 @@ export class CommentService extends CommonService<CommentDocument> {
     return false;
   }
 
+  public async updateCommentReplyDataInRedis(data: any): Promise<boolean> {
+    const key = `post:${data?.postId}:comments`;
+    const comments = await this.cacheService.lrange(key, 0, -1);
+
+    for (let i = 0; i < comments.length; i++) {
+      let parsed = JSON.parse(comments[i]);
+      if (convertToString(data?.parentId) === parsed._id) {
+        parsed.reply = [data];
+        await this.cacheService.lset(key, i, JSON.stringify(parsed));
+        return true;
+      }
+    }
+  }
+
   public async deleteCommentInRedis(
     commentId: string,
-    postId: string,
+    data: any,
   ): Promise<boolean> {
-    const key = `post:${postId}:comments`;
+    const key = `post:${data.postId}:comments`;
     const allComments = await this.cacheService.lrange(key, 0, -1);
 
-    // Find the exact full string of the comment you want to remove
-    const fullCommentString = allComments.find((c) => c.includes(commentId));
+    if (isValidAndDefined(data.parentId)) {
+      for (let i = 0; i < allComments.length; i++) {
+        let parsed = JSON.parse(allComments[i]);
+        if (convertToString(data?.parentId) === parsed._id) {
+          delete parsed.reply;
+          await this.cacheService.lset(key, i, JSON.stringify(parsed));
+          return true;
+        }
+      }
+    } else {
+      // Find the exact full string of the comment you want to remove
+      const fullCommentString = allComments.find((c) => c.includes(commentId));
 
-    if (fullCommentString) {
-      await this.cacheService.lrem(key, 0, fullCommentString);
+      if (fullCommentString) {
+        await this.cacheService.lrem(key, 0, fullCommentString);
+      }
     }
     return true;
   }

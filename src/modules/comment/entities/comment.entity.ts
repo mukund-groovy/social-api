@@ -6,10 +6,10 @@ export type CommentDocument = Comment & Document;
 
 @Schema({ timestamps: true, collection: 'comments' })
 export class Comment {
-  @Prop({ type: SchemaTypes.ObjectId })
+  @Prop({ type: SchemaTypes.ObjectId, index: true })
   parentId: ObjectId;
 
-  @Prop({ type: SchemaTypes.ObjectId, required: true })
+  @Prop({ type: SchemaTypes.ObjectId, required: true, index: true })
   userId: ObjectId;
 
   @Prop({ type: String })
