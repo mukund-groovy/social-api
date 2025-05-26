@@ -20,6 +20,9 @@ export class User {
   @Prop({ type: String })
   email: string;
 
+  @Prop({ type: String })
+  profileImage: string;
+
   @Prop({ type: String, required: true })
   phoneCode: string;
 

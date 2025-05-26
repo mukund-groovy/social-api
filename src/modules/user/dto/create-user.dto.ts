@@ -32,6 +32,11 @@ export class CreateUserDto {
   displayName: string;
 
   @ApiProperty()
+  @IsOptional()
+  @IsString()
+  profileImage: string;
+
+  @ApiProperty()
   @IsEmail()
   @IsString()
   @IsOptional()
