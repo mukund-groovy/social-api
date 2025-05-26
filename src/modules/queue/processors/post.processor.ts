@@ -15,6 +15,8 @@ import {
   PostJobData,
   UpdatePostJobData,
 } from '../job.interfaces';
+import { convertToString } from '@utils/lodash.util';
+import { CacheService } from 'src/modules/cache/cache.service';
 
 @Injectable()
 export class PostProcessor implements OnModuleInit, OnModuleDestroy {
@@ -24,6 +26,7 @@ export class PostProcessor implements OnModuleInit, OnModuleDestroy {
     @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
     private readonly postService: PostService,
     private readonly failedJobService: FailedJobService,
+    private readonly cacheService: CacheService,
   ) {}
 
   onModuleInit() {
@@ -36,9 +39,16 @@ export class PostProcessor implements OnModuleInit, OnModuleDestroy {
 
         try {
           switch (type) {
-            case 'create':
-              return await this.createPost(payload as CreatePostJobData);
-
+            case 'create': {
+              const postData = await this.createPost(
+                payload as CreatePostJobData,
+              );
+              await this.cacheService.sadd(
+                `group:post:ids`,
+                convertToString(postData._id),
+              );
+              return;
+            }
             case 'update': {
               const id = payload.postId;
               if (!id) throw new Error('Missing postId for update');
@@ -48,7 +58,9 @@ export class PostProcessor implements OnModuleInit, OnModuleDestroy {
             case 'delete': {
               const id = payload.postId;
               if (!id) throw new Error('Missing postId for delete');
-              return await this.deletePost(id);
+              await this.deletePost(id);
+              await this.cacheService.srem('group:post:ids', id);
+              return;
             }
 
             default:
@@ -90,24 +102,24 @@ export class PostProcessor implements OnModuleInit, OnModuleDestroy {
 
   // ✅ Strongly typed and properly structured methods
   private async createPost(data: Omit<CreatePostJobData, 'type'>) {
-    await this.postService.create(data);
+    const result = await this.postService.create(data);
     // TODO: Handle media upload if needed (separate service recommended)
-    return { success: true };
+    return result;
   }
 
   private async updatePost(
     id: string,
     data: Omit<UpdatePostJobData, 'type' | 'postId'>,
   ) {
-    await this.postService.findByIdAndUpdate(id, data);
+    const result = await this.postService.findByIdAndUpdate(id, data);
     // TODO: Handle media update if needed
-    return { success: true };
+    return result;
   }
 
   private async deletePost(id: string) {
-    await this.postService.findByIdAndDelete(id);
+    const result = await this.postService.findByIdAndDelete(id);
     // TODO: Handle media deletion if needed
-    return { success: true };
+    return result;
   }
 
   private async logFailureToDatabase(job: Job | null, error: Error) {

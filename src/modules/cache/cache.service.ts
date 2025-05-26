@@ -287,4 +287,19 @@ export class CacheService {
     if (!this.redisAvailable) return; // Skip if Redis is not available
     return this.redis.lrem(this.getPrefixedKey(key), count, element);
   }
+
+  async sadd(key: string, value: string): Promise<number | undefined> {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return this.redis.sadd(this.getPrefixedKey(key), value);
+  }
+
+  async srem(key: string, value: string): Promise<number> {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    await this.redis.srem(this.getPrefixedKey(key), value);
+  }
+
+  async sismember(key: string, userId: string): Promise<boolean> {
+    if (!this.redisAvailable) return; // Skip if Redis is not available
+    return (await this.redis.sismember(this.getPrefixedKey(key), userId)) === 1;
+  }
 }

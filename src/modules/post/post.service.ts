@@ -12,12 +12,15 @@ import {
   DeletePostJobData,
   UpdatePostJobData,
 } from '../queue/job.interfaces';
+import { convertToString } from '@utils/lodash.util';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class PostService extends CommonService<PostDocument> {
   constructor(
     private readonly postDAO: PostDAO,
     private readonly postQueue: PostQueue,
+    private readonly cacheService: CacheService,
   ) {
     super(postDAO);
   }
@@ -30,10 +33,15 @@ export class PostService extends CommonService<PostDocument> {
   public async createPost(
     createPostDto: CreatePostDto,
   ): Promise<{ message: string }> {
+    const user = await this.getCurrentUser();
+    const userId = convertToString(user.userId);
+
     const data: CreatePostJobData = {
       ...createPostDto,
       type: 'create',
+      userId,
     };
+
     await this.postQueue.addPostJob(data);
     return { message: messages.POST_CREATE };
   }
@@ -48,16 +56,14 @@ export class PostService extends CommonService<PostDocument> {
     id: string,
     updatePostDto: UpdatePostDto,
   ): Promise<{ message: string }> {
-    const post = await this.postDAO.findOne({ _id: ObjectID(id) });
+    await this.checkPostExists(id);
 
-    if (!post) {
-      throw new NotFoundException(messages.POST_NOT_FOUND);
-    }
     const data: UpdatePostJobData = {
       ...updatePostDto,
       type: 'update',
       postId: ObjectID(id),
     };
+
     await this.postQueue.addPostJob(data);
     return { message: messages.POST_UPDATE };
   }
@@ -68,14 +74,13 @@ export class PostService extends CommonService<PostDocument> {
    * @returns
    */
   async deletePost(id: string): Promise<{ message: string }> {
-    const post = await this.postDAO.findOne(ObjectID(id));
-    if (!post) {
-      throw new NotFoundException(messages.POST_NOT_FOUND);
-    }
+    await this.checkPostExists(id);
+
     const data: DeletePostJobData = {
       type: 'delete',
       postId: id,
     };
+
     await this.postQueue.addPostJob(data);
     return { message: messages.POST_DELETE };
   }
@@ -90,5 +95,15 @@ export class PostService extends CommonService<PostDocument> {
 
   async findOne(query: object): Promise<PostDocument> {
     return await this.postDAO.findOne(query);
+  }
+
+  async checkPostExists(postId: string): Promise<void> {
+    const inRedis = await this.cacheService.sismember('group:post:ids', postId);
+    if (inRedis) return;
+
+    const postCount = await this.postDAO.countDocuments({
+      _id: ObjectID(postId),
+    });
+    if (postCount == 0) throw new NotFoundException(messages.POST_NOT_FOUND);
   }
 }

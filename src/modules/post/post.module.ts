@@ -6,11 +6,13 @@ import { Post, PostSchema } from './entities/post.entity';
 import { PostDAO } from './post.dao';
 import { PostQueue } from './post.queue';
 import { QueueModule } from '../queue/queue.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Post.name, schema: PostSchema }]),
     QueueModule,
+    UserModule,
   ],
   controllers: [PostController],
   providers: [PostService, PostDAO, PostQueue],

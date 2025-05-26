@@ -1,23 +1,14 @@
-import {
-  IsArray,
-  IsMongoId,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-import { ObjectId } from 'mongoose';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreatePostDto {
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   description: string;
 
+  @ApiProperty()
   @IsArray()
   @IsOptional()
   media: [];
-
-  @IsString()
-  @IsNotEmpty()
-  @IsMongoId()
-  userId: string;
 }

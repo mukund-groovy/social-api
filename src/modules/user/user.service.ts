@@ -11,7 +11,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ObjectID } from '@utils/mongodb.util';
 import { CacheService } from '../cache/cache.service';
-import { isNotEmpty } from '@utils/lodash.util';
+import { isEmpty } from '@utils/lodash.util';
 
 @Injectable()
 export class UserService extends CommonService<UserDocument> {
@@ -55,14 +55,8 @@ export class UserService extends CommonService<UserDocument> {
 
     const newDisplayName = updateUser.displayName?.trim();
 
-    if (
-      isNotEmpty(newDisplayName) &&
-      newDisplayName !== existUser.displayName
-    ) {
-      updateUser.displayName = newDisplayName;
-    } else {
-      updateUser.displayName =
-        `${updateUser.firstName} ${updateUser.lastName}`.trim();
+    if (isEmpty(newDisplayName)) {
+      delete updateUser.displayName;
     }
 
     const user = await this.userDAO.findOneAndUpdate(

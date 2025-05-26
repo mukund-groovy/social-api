@@ -6,10 +6,12 @@ import {
   Put,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { SignatureAuthGuard } from 'src/common/guards/signature-auth.guard';
 
 @Controller('post')
 export class PostController {
@@ -20,6 +22,7 @@ export class PostController {
    * @param createPostDto
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Post('create')
   async createPost(@Body() createPostDto: CreatePostDto) {
     return await this.postService.createPost(createPostDto);
@@ -31,6 +34,7 @@ export class PostController {
    * @param updatePostDto
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Put('update/:id')
   async updateUser(
     @Param('id') id: string,
@@ -44,6 +48,7 @@ export class PostController {
    * @param id
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Delete('delete/:id')
   async deleteUser(@Param('id') id: string) {
     return this.postService.deletePost(id);
@@ -53,6 +58,7 @@ export class PostController {
    * API for get list of post
    * @returns
    */
+  @UseGuards(SignatureAuthGuard)
   @Get()
   async getAllPosts() {
     return this.postService.findAll();

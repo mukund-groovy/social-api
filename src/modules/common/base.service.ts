@@ -116,4 +116,8 @@ export abstract class BaseService<T extends Document> {
   async deleteOne(filter: FilterQuery<T>, options?: DeleteOptions) {
     return this.dao.deleteOne(filter, options);
   }
+
+  async countDocuments(filter: FilterQuery<T> = {}): Promise<number> {
+    return this.dao.countDocuments(filter);
+  }
 }

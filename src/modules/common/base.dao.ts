@@ -132,4 +132,8 @@ export abstract class BaseDAO<T extends Document> {
   async deleteMany(filter: FilterQuery<T>) {
     return this.model.deleteMany(filter);
   }
+
+  async countDocuments(filter: FilterQuery<T> = {}): Promise<number> {
+    return this.model.countDocuments(filter);
+  }
 }
